@@ -12,8 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static org.apache.commons.lang3.StringUtils.abbreviate;
-
 /**
  * Simple callable that inserts the document into Elasticsearch.
  */
@@ -32,6 +30,23 @@ public class ElasticsearchAppenderTask implements Callable<LoggingEvent> {
     public ElasticsearchAppenderTask(ElasticsearchAppender appender, LoggingEvent loggingEvent) {
         this.appender = appender;
         this.loggingEvent = loggingEvent;
+    }
+
+    /**
+     * Called by the executor service and inserts the document into Elasticsearch.
+     *
+     * @return The logging event
+     */
+    @Override
+    public LoggingEvent call() {
+        if (appender.getClient() != null) {
+            Map<String, Object> data = new HashMap<>();
+            writeBasic(data, loggingEvent);
+            writeThrowable(data, loggingEvent);
+            writeMDC(data, loggingEvent);
+            appender.getClient().send(data);
+        }
+        return loggingEvent;
     }
 
     protected void writeBasic(Map<String, Object> json, LoggingEvent event) {
@@ -65,28 +80,6 @@ public class ElasticsearchAppenderTask implements Callable<LoggingEvent> {
         PrintWriter printWriter = new PrintWriter(result);
         throwable.printStackTrace(printWriter);
         return result.toString();
-    }
-
-    /**
-     * Called by the executor service and inserts the document into Elasticsearch.
-     *
-     * @return The logging event
-     */
-    @Override
-    public LoggingEvent call() {
-        if (appender.getClient() != null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Sending message '{}' for logger '{}'",
-                        abbreviate(loggingEvent.getMessage().toString(), 40),
-                        loggingEvent.getLoggerName());
-            }
-            Map<String, Object> data = new HashMap<>();
-            writeBasic(data, loggingEvent);
-            writeThrowable(data, loggingEvent);
-            writeMDC(data, loggingEvent);
-            appender.getClient().send(data);
-        }
-        return loggingEvent;
     }
 
 }

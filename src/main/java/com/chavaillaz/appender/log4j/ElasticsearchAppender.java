@@ -1,6 +1,5 @@
 package com.chavaillaz.appender.log4j;
 
-import io.vavr.control.Try;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -9,11 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.spi.LoggingEvent;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static com.chavaillaz.appender.log4j.ElasticsearchUtils.getInitialHostname;
+import static com.chavaillaz.appender.log4j.ElasticsearchUtils.getProperty;
+import static java.lang.Thread.currentThread;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -54,18 +53,45 @@ public class ElasticsearchAppender extends AppenderSkeleton {
     private long elasticBatchDelay = DEFAULT_BATCH_DELAY;
     private long elasticBatchInitialDelay = DEFAULT_BATCH_INITIAL_DELAY;
 
-    private static String getProperty(String key, String defaultValue) {
-        return Optional.ofNullable(System.getenv(key)).orElse(System.getProperty(key, defaultValue));
+    /**
+     * Indicates if the current appender use credentials to send events to Elasticsearch.
+     *
+     * @return {@code true} if the user and the password are configured, {@code false} otherwise.
+     */
+    public boolean hasCredentials() {
+        return getElasticUser() != null && getElasticPassword() != null;
     }
 
-    protected String getInitialHostname() {
-        String host = "localhost";
+    /**
+     * Creates the elasticsearch client.
+     */
+    @Override
+    public void activateOptions() {
         try {
-            host = InetAddress.getLocalHost().getCanonicalHostName();
-        } catch (UnknownHostException e) {
-            errorHandler.error("Unknown host", e, GENERIC_FAILURE);
+            ElasticsearchConfiguration configuration = new ElasticsearchConfiguration();
+            configuration.setUrl(getElasticUrl());
+            configuration.setIndex(getElasticIndex());
+            configuration.setIndexSuffix(getElasticIndexSuffix());
+            configuration.setBatchSize(elasticBatchSize);
+
+            if (hasCredentials()) {
+                configuration.setUser(getElasticUser());
+                configuration.setPassword(getElasticPassword());
+            }
+
+            client = new ElasticsearchSender(configuration);
+            client.open();
+
+        } catch (Exception e) {
+            errorHandler.error("Client configuration error", e, GENERIC_FAILURE);
         }
-        return host;
+
+        if (elasticBatchSize > 1) {
+            threadPool.scheduleWithFixedDelay(() -> client.sendPartialBatches(), elasticBatchInitialDelay, elasticBatchDelay, MILLISECONDS);
+        }
+
+        log.info("Appender initialized: {}", this);
+        super.activateOptions();
     }
 
     /**
@@ -86,55 +112,19 @@ public class ElasticsearchAppender extends AppenderSkeleton {
     }
 
     /**
-     * Creates the elasticsearch client.
-     */
-    @Override
-    public void activateOptions() {
-        try {
-            ElasticsearchConfiguration configuration = new ElasticsearchConfiguration()
-                    .setUrl(getElasticUrl())
-                    .setIndex(getElasticIndex())
-                    .setIndexSuffix(getElasticIndexSuffix())
-                    .setBatchSize(elasticBatchSize);
-
-            if (hasCredentials()) {
-                configuration
-                        .setUser(getElasticUser())
-                        .setPassword(getElasticPassword());
-            }
-
-            client = new ElasticsearchSender(configuration);
-            client.open();
-
-        } catch (Exception e) {
-            errorHandler.error("Client configuration error", e, GENERIC_FAILURE);
-        }
-
-        if (elasticBatchSize > 1) {
-            threadPool.scheduleWithFixedDelay(() -> client.sendPartialBatches(), elasticBatchInitialDelay, elasticBatchDelay, MILLISECONDS);
-        }
-
-        log.info("Appender initialized: {}", this);
-        super.activateOptions();
-    }
-
-    /**
-     * Indicates if the current appender use credentials to send events to Elasticsearch.
-     *
-     * @return {@code true} if the user and the password are configured, {@code false} otherwise.
-     */
-    public boolean hasCredentials() {
-        return getElasticUser() != null && getElasticPassword() != null;
-    }
-
-    /**
      * Closes Elasticsearch client.
      */
     @Override
     public void close() {
         threadPool.shutdown();
-        Try.run(() -> threadPool.awaitTermination(1, MINUTES));
-        client.close();
+        try {
+            threadPool.awaitTermination(1, MINUTES);
+        } catch (InterruptedException e) {
+            currentThread().interrupt();
+            errorHandler.error("Thread interrupted during termination", e, GENERIC_FAILURE);
+        } finally {
+            client.close();
+        }
     }
 
     /**

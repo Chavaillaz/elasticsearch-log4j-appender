@@ -9,7 +9,8 @@ class ElasticsearchConfigurationTest {
     @Test
     void testGenerateIndexNameDate() {
         // Given
-        ElasticsearchConfiguration configuration = new ElasticsearchConfiguration().setIndex("idx");
+        ElasticsearchConfiguration configuration = new ElasticsearchConfiguration();
+        configuration.setIndex("idx");
         configuration.setIndexSuffix("-yyyy.MM.dd");
 
         // When

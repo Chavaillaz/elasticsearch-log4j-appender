@@ -11,12 +11,12 @@
 
     <name>${project.groupId}.${project.artifactId}</name>
     <description>Elasticsearch Appender for Log4j</description>
-    <url>https://github.com/Chavaillaz/elasticsearch-log4j-appender</url>
+    <url>https://github.com/chavaillaz/elasticsearch-log4j-appender</url>
 
     <scm>
-        <connection>scm:git:https://github.com/Chavaillaz/elasticsearch-log4j-appender.git</connection>
-        <developerConnection>scm:git:ssh://github.com/Chavaillaz/elasticsearch-log4j-appender.git</developerConnection>
-        <url>https://github.com/Chavaillaz/elasticsearch-log4j-appender</url>
+        <connection>scm:git:https://github.com/chavaillaz/elasticsearch-log4j-appender.git</connection>
+        <developerConnection>scm:git:ssh://github.com/chavaillaz/elasticsearch-log4j-appender.git</developerConnection>
+        <url>https://github.com/chavaillaz/elasticsearch-log4j-appender</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -37,7 +37,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <elasticsearch.version>7.15.0</elasticsearch.version>
+        <elasticsearch.version>7.15.2</elasticsearch.version>
+        <jackson.version>2.13.0</jackson.version>
         <lombok.version>1.18.22</lombok.version>
     </properties>
 
@@ -64,32 +65,24 @@
 
         <!-- Elastic search client -->
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>${elasticsearch.version}</version>
-        </dependency>
-        <dependency>
             <groupId>co.elastic.clients</groupId>
             <artifactId>elasticsearch-java</artifactId>
             <version>${elasticsearch.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.13.0</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.13.0</version>
-        </dependency>
-
-
-        <!-- Object-functional library -->
-        <dependency>
-            <groupId>io.vavr</groupId>
-            <artifactId>vavr</artifactId>
-            <version>0.10.4</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- Apache commons -->
