@@ -16,9 +16,10 @@ jobs:
     - name: SonarQube Scan
       uses: sonarsource/sonarqube-scan-action@master
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-    - name: SonarQube Quality Gate check
+    - name: SonarQube Quality Gate
       uses: sonarsource/sonarqube-quality-gate-action@master
       timeout-minutes: 5
       env:
