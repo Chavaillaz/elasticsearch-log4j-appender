@@ -4,7 +4,18 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+          server-id: github
+          settings-path: ${{ github.workspace }}
+
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         env:
