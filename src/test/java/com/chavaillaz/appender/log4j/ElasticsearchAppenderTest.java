@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.log4j.spi.LoggingEvent;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -19,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.log4j.Level.INFO;
 import static org.apache.log4j.LogManager.getRootLogger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 class ElasticsearchAppenderTest {
@@ -67,9 +69,11 @@ class ElasticsearchAppenderTest {
             String id = UUID.randomUUID().toString();
             ElasticsearchClient client = createClient(container.getHttpHostAddress(), ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD);
             ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), container.getHttpHostAddress());
+            MDC.put("key", "value");
 
             // When
-            appender.append(new LoggingEvent(getClass().getSimpleName(), getRootLogger(), INFO, id, null));
+            appender.append(new LoggingEvent(getClass().getSimpleName(), getRootLogger(), INFO, id, new RuntimeException()));
+            appender.close();
             sleep(1000);
 
             // Then
@@ -80,6 +84,8 @@ class ElasticsearchAppenderTest {
             assertEquals(appender.getApplicationName(), logs.get(0).getApplication());
             assertEquals(INFO.toString(), logs.get(0).getLevel());
             assertEquals(id, logs.get(0).getLogmessage());
+            assertEquals("value", logs.get(0).getKey());
+            assertNotNull(logs.get(0).getStacktrace());
         }
     }
 

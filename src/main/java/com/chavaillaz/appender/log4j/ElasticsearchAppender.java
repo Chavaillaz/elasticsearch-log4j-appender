@@ -1,5 +1,7 @@
 package com.chavaillaz.appender.log4j;
 
+import com.chavaillaz.appender.log4j.converter.DataConverter;
+import com.chavaillaz.appender.log4j.converter.DefaultDataConverter;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -52,6 +54,7 @@ public class ElasticsearchAppender extends AppenderSkeleton {
     private int elasticBatchSize = DEFAULT_BATCH_SIZE;
     private long elasticBatchDelay = DEFAULT_BATCH_DELAY;
     private long elasticBatchInitialDelay = DEFAULT_BATCH_INITIAL_DELAY;
+    private DataConverter dataConverter = new DefaultDataConverter();
 
     /**
      * Indicates if the current appender use credentials to send events to Elasticsearch.

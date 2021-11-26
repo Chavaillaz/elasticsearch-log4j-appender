@@ -22,23 +22,23 @@ public class ElasticsearchConfiguration {
 
     public void setIndexSuffix(String indexSuffix) {
         this.indexSuffix = indexSuffix;
-        try {
-            this.indexSuffixFormatter = DateTimeFormatter.ofPattern(indexSuffix);
-        } catch (Exception e) {
-            log.error("Format error for elasticIndexSuffix '{}'", indexSuffix, e);
-        }
+        this.indexSuffixFormatter = DateTimeFormatter.ofPattern(indexSuffix);
     }
 
-    public boolean hasCredentials() {
-        return getUser() != null && getPassword() != null;
-    }
-
+    /**
+     * Generates the index name using the suffix if present.
+     *
+     * @param utcDateTime The date and time of the event in the format
+     *                    {@link java.time.format.DateTimeFormatter#ISO_OFFSET_DATE_TIME}
+     *                    or {@code null} to avoid using the prefix
+     * @return The index name calculated
+     */
     public String generateIndexName(String utcDateTime) {
-        if (utcDateTime == null || indexSuffixFormatter == null) {
-            return getIndex();
-        } else {
+        if (utcDateTime != null && indexSuffixFormatter != null) {
             OffsetDateTime odt = OffsetDateTime.parse(utcDateTime);
             return getIndex() + odt.format(indexSuffixFormatter);
+        } else {
+            return getIndex();
         }
     }
 
