@@ -1,12 +1,13 @@
 package com.chavaillaz.appender.log4j;
 
+import com.chavaillaz.appender.log4j.converter.EventConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.log4j.spi.LoggingEvent;
 
 import java.util.concurrent.Callable;
 
 /**
- * Simple callable that inserts the document into Elasticsearch.
+ * Simple callable that inserts the logging event into Elasticsearch.
  */
 @Slf4j
 public class ElasticsearchAppenderTask implements Callable<LoggingEvent> {
@@ -33,7 +34,8 @@ public class ElasticsearchAppenderTask implements Callable<LoggingEvent> {
     @Override
     public LoggingEvent call() {
         if (appender.getClient() != null) {
-            appender.getClient().send(appender.getDataConverter().convert(appender, loggingEvent));
+            EventConverter converter = appender.getClient().getConfiguration().getEventConverter();
+            appender.getClient().send(converter.convert(appender, loggingEvent));
         }
         return loggingEvent;
     }

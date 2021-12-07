@@ -1,7 +1,6 @@
 package com.chavaillaz.appender.log4j;
 
-import com.chavaillaz.appender.log4j.converter.DataConverter;
-import com.chavaillaz.appender.log4j.converter.DefaultDataConverter;
+import com.chavaillaz.appender.log4j.converter.DefaultEventConverter;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -21,7 +20,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.apache.log4j.spi.ErrorCode.GENERIC_FAILURE;
 
 /**
- * Using Elasticsearch to store Logging Events for insert the document log4j.
+ * Appender using Elasticsearch to store logging events.
  */
 @Slf4j
 @Getter
@@ -29,40 +28,39 @@ import static org.apache.log4j.spi.ErrorCode.GENERIC_FAILURE;
 @ToString
 public class ElasticsearchAppender extends AppenderSkeleton {
 
-    private static final String DEFAULT_ENVIRONMENT = "local";
-    private static final String DEFAULT_INDEX = "ha";
-    private static final String DEFAULT_INDEX_SUFFIX = "-yyyy.MM.dd";
-    private static final int DEFAULT_BATCH_SIZE = 1;
-    private static final long DEFAULT_BATCH_DELAY = 1000;
-    private static final long DEFAULT_BATCH_INITIAL_DELAY = 1000;
-    private static final String VARIABLE_NAME_ENVIRONMENT = "ENV";
-
     @Exclude
     private final ScheduledExecutorService threadPool = newSingleThreadScheduledExecutor();
-
-    @Exclude
     private ElasticsearchSender client;
-    private String applicationName = "unknown";
-    private String hostName = getInitialHostname();
-    private String environmentName = getProperty(VARIABLE_NAME_ENVIRONMENT, DEFAULT_ENVIRONMENT);
-    private String elasticIndex = DEFAULT_INDEX;
-    private String elasticIndexSuffix = DEFAULT_INDEX_SUFFIX;
+    private String applicationName = getProperty("APPLICATION", "unknown");
+    private String hostName = getProperty("HOST", getInitialHostname());
+    private String environmentName = getProperty("ENV", "local");
+    private String elasticConverter = getProperty("CONVERTER", DefaultEventConverter.class.getName());
+    private String elasticIndex = getProperty("INDEX", "ha");
+    private String elasticIndexSuffix = getProperty("INDEX_SUFFIX", "-yyyy.MM.dd");
     private String elasticUrl;
     private String elasticUser;
     private String elasticPassword;
     private boolean elasticParallelExecution = true;
-    private int elasticBatchSize = DEFAULT_BATCH_SIZE;
-    private long elasticBatchDelay = DEFAULT_BATCH_DELAY;
-    private long elasticBatchInitialDelay = DEFAULT_BATCH_INITIAL_DELAY;
-    private DataConverter dataConverter = new DefaultDataConverter();
+    private int elasticBatchSize = 1;
+    private long elasticBatchDelay = 1000;
+    private long elasticBatchInitialDelay = 1000;
 
     /**
      * Indicates if the current appender use credentials to send events to Elasticsearch.
      *
-     * @return {@code true} if the user and the password are configured, {@code false} otherwise.
+     * @return {@code true} if the user and the password are configured, {@code false} otherwise
      */
     public boolean hasCredentials() {
         return getElasticUser() != null && getElasticPassword() != null;
+    }
+
+    /**
+     * Gets the Elasticsearch sender.
+     *
+     * @return The client to send messages
+     */
+    protected ElasticsearchSender getClient() {
+        return client;
     }
 
     /**
@@ -76,6 +74,7 @@ public class ElasticsearchAppender extends AppenderSkeleton {
             configuration.setIndex(getElasticIndex());
             configuration.setIndexSuffix(getElasticIndexSuffix());
             configuration.setBatchSize(elasticBatchSize);
+            configuration.setEventConverter(elasticConverter);
 
             if (hasCredentials()) {
                 configuration.setUser(getElasticUser());
@@ -93,7 +92,6 @@ public class ElasticsearchAppender extends AppenderSkeleton {
             threadPool.scheduleWithFixedDelay(() -> client.sendPartialBatches(), elasticBatchInitialDelay, elasticBatchDelay, MILLISECONDS);
         }
 
-        log.info("Appender initialized: {}", this);
         super.activateOptions();
     }
 
@@ -106,10 +104,11 @@ public class ElasticsearchAppender extends AppenderSkeleton {
     protected void append(LoggingEvent loggingEvent) {
         if (isAsSevereAsThreshold(loggingEvent.getLevel())) {
             loggingEvent.getMDCCopy();
+            ElasticsearchAppenderTask task = new ElasticsearchAppenderTask(this, loggingEvent);
             if (elasticParallelExecution) {
-                threadPool.submit(new ElasticsearchAppenderTask(this, loggingEvent));
+                threadPool.submit(task);
             } else {
-                new ElasticsearchAppenderTask(this, loggingEvent).call();
+                task.call();
             }
         }
     }
@@ -123,8 +122,8 @@ public class ElasticsearchAppender extends AppenderSkeleton {
         try {
             threadPool.awaitTermination(1, MINUTES);
         } catch (InterruptedException e) {
-            currentThread().interrupt();
             errorHandler.error("Thread interrupted during termination", e, GENERIC_FAILURE);
+            currentThread().interrupt();
         } finally {
             client.close();
         }

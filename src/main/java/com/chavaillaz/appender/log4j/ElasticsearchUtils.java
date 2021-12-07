@@ -23,10 +23,25 @@ import static org.apache.http.auth.AuthScope.ANY;
 @UtilityClass
 public class ElasticsearchUtils {
 
+    /**
+     * Searches an environment or system property value.
+     *
+     * @param key          The key to search in the properties
+     * @param defaultValue The default value to use in case the given key is not found
+     * @return The value found in environment/system properties or the given default value
+     */
     public static String getProperty(String key, String defaultValue) {
         return Optional.ofNullable(System.getenv(key)).orElse(System.getProperty(key, defaultValue));
     }
 
+    /**
+     * Creates a new Elasticsearch client.
+     *
+     * @param url      The URL of the Elasticsearch instance to reach
+     * @param username The username to authenticate
+     * @param password The password corresponding to the given username
+     * @return The Elasticsearch client with the given configuration
+     */
     public static ElasticsearchClient createClient(String url, String username, String password) {
         CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(ANY, new UsernamePasswordCredentials(username, password));
@@ -41,6 +56,11 @@ public class ElasticsearchUtils {
         return new ElasticsearchClient(transport);
     }
 
+    /**
+     * Gets the current host name of the machine.
+     *
+     * @return The host name or {@code localhost} if it cannot be determined
+     */
     public static String getInitialHostname() {
         String host = "localhost";
         try {

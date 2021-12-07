@@ -11,7 +11,31 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DefaultDataConverter implements DataConverter {
+/**
+ * Default converter converting the following fields:
+ * <ul>
+ *     <li><strong>datetime:</strong> Date of logging event</li>
+ *     <li><strong>host:</strong> Taken from appender configuration)</li>
+ *     <li><strong>environment:</strong> Taken from appender configuration)</li>
+ *     <li><strong>application:</strong> Taken from appender configuration)</li>
+ *     <li><strong>logger:</strong> Logger of logging event</li>
+ *     <li><strong>level:</strong> Level of logging event</li>
+ *     <li><strong>logmessage:</strong> Message of the logging event</li>
+ *     <li><strong>thread:</strong> Thread that created the logging event</li>
+ * </ul>
+ * <p>All the MDC fields will also be added as is (if they not already exist).</p>
+ * <p>In case the event contains an exception, it also includes the fields:</p>
+ * <ul>
+ *     <li><strong>class:</strong> Class of the exception</li>
+ *     <li><strong>stacktrace:</strong> Stacktrace of the exception</li>
+ * </ul>
+ */
+public class DefaultEventConverter implements EventConverter {
+
+    @Override
+    public String getDateField() {
+        return "datetime";
+    }
 
     @Override
     public Map<String, Object> convert(ElasticsearchAppender appender, LoggingEvent event) {
@@ -23,7 +47,7 @@ public class DefaultDataConverter implements DataConverter {
     }
 
     protected void writeBasic(Map<String, Object> json, ElasticsearchAppender appender, LoggingEvent event) {
-        json.put("datetime", new Date(event.getTimeStamp()).toInstant().toString());
+        json.put(getDateField(), new Date(event.getTimeStamp()).toInstant().toString());
         json.put("host", appender.getHostName());
         json.put("environment", appender.getEnvironmentName());
         json.put("application", appender.getApplicationName());
@@ -35,7 +59,7 @@ public class DefaultDataConverter implements DataConverter {
 
     protected void writeMDC(Map<String, Object> json, LoggingEvent event) {
         for (Object key : event.getProperties().keySet()) {
-            json.put(key.toString(), event.getProperties().get(key).toString());
+            json.putIfAbsent(key.toString(), event.getProperties().get(key).toString());
         }
     }
 

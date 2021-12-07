@@ -3,6 +3,7 @@ package com.chavaillaz.appender.log4j;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -19,7 +20,11 @@ import static java.util.Collections.singletonList;
 public class ElasticsearchSender implements AutoCloseable {
 
     private final List<Map<String, Object>> batch = new ArrayList<>();
+
+    @Getter
     private final ElasticsearchConfiguration configuration;
+
+    @Getter
     private ElasticsearchClient client;
 
     /**
@@ -88,8 +93,7 @@ public class ElasticsearchSender implements AutoCloseable {
         try {
             BulkRequest.Builder<Object> builder = new BulkRequest.Builder<>();
             for (Map<String, Object> document : documents) {
-                // Select the index based on the datetime in the record
-                String dateTime = (String) document.get("datetime");
+                String dateTime = document.get(configuration.getEventConverter().getDateField()).toString();
                 builder.addOperation(operation -> operation
                                 .index(index -> index.index(configuration.generateIndexName(dateTime))))
                         .addDocument(document);
@@ -97,7 +101,7 @@ public class ElasticsearchSender implements AutoCloseable {
 
             BulkResponse response = client.bulk(builder.build());
             if (!response.errors()) {
-                log.debug("Bulk of {} elements sent successfully in {}", documents.size(), response.took());
+                log.debug("Bulk of {} elements sent successfully in {}ms", documents.size(), response.took());
                 return true;
             }
         } catch (Exception e) {
