@@ -26,13 +26,18 @@ You then have to configure log4j in order to include this appender (see configur
 In the configuration file `log4j.properties` or `log4j.xml`, add a new appender
 `com.chavaillaz.appender.log4j.ElasticsearchAppender` with the following properties:
 
-- `applicationName` (default `unknown`). It can also be specified as environment or system property `APPLICATION`.
-- `hostName` (default is the machine host name). It can also be specified as environment or system property `HOST`.
-- `environmentName` (default `local`). It can be specified also as environment or system property `ENV`.
-- `elasticConverter` (default `com.chavaillaz.appender.log4j.converter.DefaultEventConverter`) is the converter used 
-  to convert a logging event into a key/value document to be stored in Elasticsearch.
+- `applicationName` (default `unknown`). 
+  It can also be specified as environment variable or system property `APPLICATION`.
+- `hostName` (default is the machine host name). 
+  It can also be specified as environment variable or system property `HOST`.
+- `environmentName` (default `local`). 
+  It can be specified also as environment variable or system property `ENV`.
+- `elasticConverter` (default `com.chavaillaz.appender.log4j.converter.DefaultEventConverter`) is the class used to
+  convert a logging event into a key/value document to be stored in Elasticsearch.
+  It can also be specified as environment variable or system property `CONVERTER`.
 - `elasticIndex` (default `ha`) and `elasticIndexSuffix` (default `-yyyy.MM.dd`) form together the index name where the
   messages are sent to. Note that `elasticIndexSuffix` must contain a format pattern suitable for `DateTimeFormatter`.
+  They can also both be specified with environment variables or system properties `INDEX` and `INDEX_SUFFIX`.
 - `elasticUrl` is the address of the server (or its load balancer) in the format `[scheme://][host]:[port]`. The scheme
   is optional and defaults to `http`.
 - `elasticUser` and `elasticPassword` are the credentials for the server.
@@ -97,7 +102,7 @@ log4j.additivity.org.elasticsearch.client=false
         <param name="elasticUser" value="myUser"/>
         <param name="elasticPassword" value="myPassword"/>
         <param name="elasticParallelExecution" value="true"/>
-        <param name="elasticBatchSize" value="1"/>
+        <param name="elasticBatchSize" value="10"/>
         <param name="elasticBatchInitialDelay" value="1000"/>
         <param name="elasticBatchDelay" value="1000"/>
     </appender>
