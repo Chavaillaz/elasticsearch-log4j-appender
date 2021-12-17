@@ -5,14 +5,20 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.chavaillaz/elasticsearch-log4j-appender/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.chavaillaz/elasticsearch-log4j-appender)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Elasticsearch appender allow you to send log events directly from log4j 1.2 to an elastic cluster. The delivery of logs
-is asynchronous (i.e. not on the main thread) and therefore will not block execution of the program.
+Elasticsearch appender allows you to send log events directly from Log4j to an elastic cluster. The delivery of logs is
+asynchronous (i.e. not on the main thread) and therefore will not block execution of the program.
+
+| Appender version | Log4j version |
+|------------------|---------------|
+| 1.x              | 1.x           |
+| 2.x              | 2.x           |
 
 ## Installation
 
-The dependency is available in maven central (see badge for the version):
+The dependency is available in maven central (see badge and table above for the version):
 
 ```xml
+
 <dependency>
     <groupId>com.chavaillaz</groupId>
     <artifactId>elasticsearch-log4j-appender</artifactId>
@@ -23,18 +29,17 @@ You then have to configure log4j in order to include this appender (see configur
 
 ## Configuration
 
-In the configuration file `log4j.properties` or `log4j.xml`, add a new appender
-`com.chavaillaz.appender.log4j.ElasticsearchAppender` with the following properties:
+In the configuration file, add a new appender `ElasticsearchAppender` (from package `com.chavaillaz.appender.log4j`)
+with the following properties **(please note that for Log4j2 they all start with an uppercase letter)**:
 
-- `applicationName` (default `unknown`). 
-  It can also be specified as environment variable or system property `APPLICATION`.
-- `hostName` (default is the machine host name). 
-  It can also be specified as environment variable or system property `HOST`.
-- `environmentName` (default `local`). 
-  It can be specified also as environment variable or system property `ENV`.
+- `applicationName` (default `unknown`). It can also be specified as environment variable or system
+  property `APPLICATION`.
+- `hostName` (default is the machine host name). It can also be specified as environment variable or system
+  property `HOST`.
+- `environmentName` (default `local`). It can be specified also as environment variable or system property `ENV`.
 - `elasticConverter` (default `com.chavaillaz.appender.log4j.converter.DefaultEventConverter`) is the class used to
-  convert a logging event into a key/value document to be stored in Elasticsearch.
-  It can also be specified as environment variable or system property `CONVERTER`.
+  convert a logging event into a key/value document to be stored in Elasticsearch. It can also be specified as
+  environment variable or system property `CONVERTER`.
 - `elasticIndex` (default `ha`) and `elasticIndexSuffix` (default `-yyyy.MM.dd`) form together the index name where the
   messages are sent to. Note that `elasticIndexSuffix` must contain a format pattern suitable for `DateTimeFormatter`.
   They can also both be specified with environment variables or system properties `INDEX` and `INDEX_SUFFIX`.
@@ -53,33 +58,41 @@ In the configuration file `log4j.properties` or `log4j.xml`, add a new appender
 Note that `elasticUrl` is the only mandatory configuration to give, except if you need to overwrite the default value of
 another ones.
 
-### Property file example
+### XML file example (log4j version 2)
 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info" packages="com.chavaillaz.appender.log4j">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+        <ElasticsearchAppender name="Elasticsearch">
+            <PatternLayout pattern="%msg"/>
+            <ApplicationName>myApplication</ApplicationName>
+            <EnvironmentName>local</EnvironmentName>
+            <ElasticConverter>com.chavaillaz.appender.log4j.converter.DefaultEventConverter</ElasticConverter>
+            <ElasticUrl>http://localhost:9300</ElasticUrl>
+            <ElasticIndex>ha</ElasticIndex>
+            <ElasticIndexSuffix>-yyyy.MM.dd</ElasticIndexSuffix>
+            <ElasticUser>elastic</ElasticUser>
+            <ElasticPassword>changeme</ElasticPassword>
+            <ElasticParallelExecution>true</ElasticParallelExecution>
+            <ElasticBatchSize>10</ElasticBatchSize>
+            <ElasticBatchInitialDelay>1000</ElasticBatchInitialDelay>
+            <ElasticBatchDelay>1000</ElasticBatchDelay>
+        </ElasticsearchAppender>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="Elasticsearch" additivity="false"/>
+        </Root>
+    </Loggers>
+</Configuration>
 ```
-log4j.appender.ELASTIC=com.chavaillaz.appender.log4j.ElasticsearchAppender
-log4j.appender.ELASTIC.applicationName=myApplication
-log4j.appender.ELASTIC.environmentName=myEnvironment
-log4j.appender.ELASTIC.elasticConverter=com.package.CustomEventConverter
-log4j.appender.ELASTIC.elasticUrl=myElasticsearchUrl
-log4j.appender.ELASTIC.elasticIndex=myIndex
-log4j.appender.ELASTIC.elasticIndexSuffix=-yyyy.MM.dd
-log4j.appender.ELASTIC.elasticUser=myUser
-log4j.appender.ELASTIC.elasticPassword=myPassword
-log4j.appender.ELASTIC.elasticParallelExecution=true
-log4j.appender.ELASTIC.elasticBatchSize=10
-log4j.appender.ELASTIC.elasticBatchInitialDelay=1000
-log4j.appender.ELASTIC.elasticBatchDelay=1000
 
-# Avoid to propagate the logs from ElasticAppender to itself (cyclic)
-log4j.logger.com.chavaillaz.appender=WARN, CONSOLE
-log4j.logger.org.apache.http=WARN, CONSOLE
-log4j.logger.org.elasticsearch.client=WARN, CONSOLE
-log4j.additivity.com.chavaillaz.appender=false
-log4j.additivity.org.apache.http=false
-log4j.additivity.org.elasticsearch.client=false
-```
-
-### XML file example
+### XML file example (log4j version 1)
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -120,6 +133,32 @@ log4j.additivity.org.elasticsearch.client=false
     </root>
 
 </log4j:configuration>
+```
+
+### Property file example (log4j version 1)
+
+```
+log4j.appender.ELASTIC=com.chavaillaz.appender.log4j.ElasticsearchAppender
+log4j.appender.ELASTIC.applicationName=myApplication
+log4j.appender.ELASTIC.environmentName=myEnvironment
+log4j.appender.ELASTIC.elasticConverter=com.package.CustomEventConverter
+log4j.appender.ELASTIC.elasticUrl=myElasticsearchUrl
+log4j.appender.ELASTIC.elasticIndex=myIndex
+log4j.appender.ELASTIC.elasticIndexSuffix=-yyyy.MM.dd
+log4j.appender.ELASTIC.elasticUser=myUser
+log4j.appender.ELASTIC.elasticPassword=myPassword
+log4j.appender.ELASTIC.elasticParallelExecution=true
+log4j.appender.ELASTIC.elasticBatchSize=10
+log4j.appender.ELASTIC.elasticBatchInitialDelay=1000
+log4j.appender.ELASTIC.elasticBatchDelay=1000
+
+# Avoid to propagate the logs from ElasticAppender to itself (cyclic)
+log4j.logger.com.chavaillaz.appender=WARN, CONSOLE
+log4j.logger.org.apache.http=WARN, CONSOLE
+log4j.logger.org.elasticsearch.client=WARN, CONSOLE
+log4j.additivity.com.chavaillaz.appender=false
+log4j.additivity.org.apache.http=false
+log4j.additivity.org.elasticsearch.client=false
 ```
 
 ## Contributing

@@ -1,49 +1,57 @@
 package com.chavaillaz.appender.log4j;
 
 import com.chavaillaz.appender.log4j.converter.DefaultEventConverter;
+import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 import lombok.ToString.Exclude;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.plugins.Plugin;
+import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
+import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
+import org.apache.logging.log4j.core.config.plugins.PluginElement;
+import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static com.chavaillaz.appender.log4j.ElasticsearchUtils.getInitialHostname;
 import static com.chavaillaz.appender.log4j.ElasticsearchUtils.getProperty;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.apache.log4j.spi.ErrorCode.GENERIC_FAILURE;
+import static org.apache.logging.log4j.core.Appender.ELEMENT_TYPE;
+import static org.apache.logging.log4j.core.Core.CATEGORY_NAME;
+import static org.apache.logging.log4j.core.config.Property.EMPTY_ARRAY;
+import static org.apache.logging.log4j.core.layout.PatternLayout.createDefaultLayout;
 
 /**
  * Appender using Elasticsearch to store logging events.
  */
 @Slf4j
 @Getter
-@Setter
 @ToString
-public class ElasticsearchAppender extends AppenderSkeleton {
+@Plugin(name = "ElasticsearchAppender", category = CATEGORY_NAME, elementType = ELEMENT_TYPE)
+public class ElasticsearchAppender extends AbstractAppender {
 
     @Exclude
     private final ScheduledExecutorService threadPool = newSingleThreadScheduledExecutor();
+    private final ElasticsearchConfiguration configuration;
     private ElasticsearchSender client;
-    private String applicationName = getProperty("APPLICATION", "unknown");
-    private String hostName = getProperty("HOST", getInitialHostname());
-    private String environmentName = getProperty("ENV", "local");
-    private String elasticConverter = getProperty("CONVERTER", DefaultEventConverter.class.getName());
-    private String elasticIndex = getProperty("INDEX", "ha");
-    private String elasticIndexSuffix = getProperty("INDEX_SUFFIX", "-yyyy.MM.dd");
-    private String elasticUrl;
-    private String elasticUser;
-    private String elasticPassword;
-    private boolean elasticParallelExecution = true;
-    private int elasticBatchSize = 1;
-    private long elasticBatchDelay = 1000;
-    private long elasticBatchInitialDelay = 1000;
+
+    protected ElasticsearchAppender(String name, Filter filter, Layout<?> layout, ElasticsearchConfiguration configuration) {
+        super(name, filter, layout, true, EMPTY_ARRAY);
+        this.configuration = configuration;
+    }
+
+    @PluginBuilderFactory
+    public static Builder builder() {
+        return new Builder();
+    }
 
     /**
      * Indicates if the current appender use credentials to send events to Elasticsearch.
@@ -51,7 +59,7 @@ public class ElasticsearchAppender extends AppenderSkeleton {
      * @return {@code true} if the user and the password are configured, {@code false} otherwise
      */
     public boolean hasCredentials() {
-        return getElasticUser() != null && getElasticPassword() != null;
+        return configuration.getUser() != null && configuration.getPassword() != null;
     }
 
     /**
@@ -67,32 +75,23 @@ public class ElasticsearchAppender extends AppenderSkeleton {
      * Creates the elasticsearch client.
      */
     @Override
-    public void activateOptions() {
+    public void start() {
         try {
-            ElasticsearchConfiguration configuration = new ElasticsearchConfiguration();
-            configuration.setUrl(getElasticUrl());
-            configuration.setIndex(getElasticIndex());
-            configuration.setIndexSuffix(getElasticIndexSuffix());
-            configuration.setBatchSize(elasticBatchSize);
-            configuration.setEventConverter(elasticConverter);
-
-            if (hasCredentials()) {
-                configuration.setUser(getElasticUser());
-                configuration.setPassword(getElasticPassword());
-            }
-
             client = new ElasticsearchSender(configuration);
             client.open();
-
         } catch (Exception e) {
-            errorHandler.error("Client configuration error", e, GENERIC_FAILURE);
+            error("Client configuration error", e);
         }
 
-        if (elasticBatchSize > 1) {
-            threadPool.scheduleWithFixedDelay(() -> client.sendPartialBatches(), elasticBatchInitialDelay, elasticBatchDelay, MILLISECONDS);
+        if (configuration.getBatchSize() > 1) {
+            threadPool.scheduleWithFixedDelay(
+                    client::sendPartialBatches,
+                    configuration.getBatchInitialDelay(),
+                    configuration.getBatchDelay(),
+                    MILLISECONDS);
         }
 
-        super.activateOptions();
+        super.start();
     }
 
     /**
@@ -101,15 +100,12 @@ public class ElasticsearchAppender extends AppenderSkeleton {
      * @param loggingEvent The logging event to send.
      */
     @Override
-    protected void append(LoggingEvent loggingEvent) {
-        if (isAsSevereAsThreshold(loggingEvent.getLevel())) {
-            loggingEvent.getMDCCopy();
-            ElasticsearchAppenderTask task = new ElasticsearchAppenderTask(this, loggingEvent);
-            if (elasticParallelExecution) {
-                threadPool.submit(task);
-            } else {
-                task.call();
-            }
+    public void append(LogEvent loggingEvent) {
+        ElasticsearchAppenderTask task = new ElasticsearchAppenderTask(this, loggingEvent);
+        if (configuration.isParallelExecution()) {
+            threadPool.submit(task);
+        } else {
+            task.call();
         }
     }
 
@@ -117,26 +113,91 @@ public class ElasticsearchAppender extends AppenderSkeleton {
      * Closes Elasticsearch client.
      */
     @Override
-    public void close() {
+    public boolean stop(long timeout, TimeUnit timeUnit) {
         threadPool.shutdown();
         try {
-            threadPool.awaitTermination(1, MINUTES);
+            threadPool.awaitTermination(timeout, timeUnit);
         } catch (InterruptedException e) {
-            errorHandler.error("Thread interrupted during termination", e, GENERIC_FAILURE);
+            error("Thread interrupted during termination", e);
             currentThread().interrupt();
         } finally {
             client.close();
+            super.stop(timeout, timeUnit);
         }
+        return true;
     }
 
-    /**
-     * Ensures that a Layout property is not required
-     *
-     * @return Always {@code false}.
-     */
-    @Override
-    public boolean requiresLayout() {
-        return false;
+    @Data
+    public static class Builder implements org.apache.logging.log4j.core.util.Builder<ElasticsearchAppender> {
+
+        @PluginBuilderAttribute
+        @Required(message = "No appender name provided")
+        private String name;
+
+        @PluginElement("Layout")
+        private Layout<String> layout = createDefaultLayout();
+
+        @PluginElement("Filter")
+        private Filter filter;
+
+        @PluginBuilderAttribute("ApplicationName")
+        private String applicationName = getProperty("APPLICATION", "unknown");
+
+        @PluginBuilderAttribute("HostName")
+        private String hostName = getProperty("HOST", getInitialHostname());
+
+        @PluginBuilderAttribute("EnvironmentName")
+        private String environmentName = getProperty("ENV", "local");
+
+        @PluginBuilderAttribute("ElasticConverter")
+        private String elasticConverter = getProperty("CONVERTER", DefaultEventConverter.class.getName());
+
+        @PluginBuilderAttribute("ElasticIndex")
+        private String elasticIndex = getProperty("INDEX", "ha");
+
+        @PluginBuilderAttribute("ElasticIndexSuffix")
+        private String elasticIndexSuffix = getProperty("INDEX_SUFFIX", "-yyyy.MM.dd");
+
+        @PluginBuilderAttribute("ElasticUrl")
+        private String elasticUrl;
+
+        @PluginBuilderAttribute("ElasticUser")
+        private String elasticUser;
+
+        @PluginBuilderAttribute("ElasticPassword")
+        private String elasticPassword;
+
+        @PluginBuilderAttribute("ElasticParallelExecution")
+        private boolean elasticParallelExecution = true;
+
+        @PluginBuilderAttribute("ElasticBatchSize")
+        private int elasticBatchSize = 1;
+
+        @PluginBuilderAttribute("ElasticBatchDelay")
+        private long elasticBatchDelay = 1000;
+
+        @PluginBuilderAttribute("ElasticBatchInitialDelay")
+        private long elasticBatchInitialDelay = 1000;
+
+        @Override
+        public ElasticsearchAppender build() {
+            ElasticsearchConfiguration configuration = new ElasticsearchConfiguration();
+            configuration.setApplicationName(getApplicationName());
+            configuration.setHostName(getHostName());
+            configuration.setEnvironmentName(getEnvironmentName());
+            configuration.setEventConverter(getElasticConverter());
+            configuration.setIndex(getElasticIndex());
+            configuration.setIndexSuffix(getElasticIndexSuffix());
+            configuration.setUrl(getElasticUrl());
+            configuration.setUser(getElasticUser());
+            configuration.setPassword(getElasticPassword());
+            configuration.setParallelExecution(isElasticParallelExecution());
+            configuration.setBatchSize(getElasticBatchSize());
+            configuration.setBatchDelay(getElasticBatchDelay());
+            configuration.setBatchInitialDelay(getElasticBatchInitialDelay());
+            return new ElasticsearchAppender(getName(), getFilter(), getLayout(), configuration);
+        }
+
     }
 
 }

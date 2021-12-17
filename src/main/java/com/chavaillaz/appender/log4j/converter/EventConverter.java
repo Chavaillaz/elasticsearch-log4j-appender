@@ -1,7 +1,7 @@
 package com.chavaillaz.appender.log4j.converter;
 
 import com.chavaillaz.appender.log4j.ElasticsearchAppender;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.LogEvent;
 
 import java.util.Map;
 
@@ -24,6 +24,6 @@ public interface EventConverter {
      * @param event    The logging event
      * @return The {@link Map} containing the properties to send
      */
-    Map<String, Object> convert(ElasticsearchAppender appender, LoggingEvent event);
+    Map<String, Object> convert(ElasticsearchAppender appender, LogEvent event);
 
 }
