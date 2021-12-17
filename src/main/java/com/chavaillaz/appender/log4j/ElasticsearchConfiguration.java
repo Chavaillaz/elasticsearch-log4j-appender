@@ -15,14 +15,19 @@ import java.time.format.DateTimeFormatter;
 @Setter
 public class ElasticsearchConfiguration {
 
+    private String applicationName;
+    private String hostName;
+    private String environmentName;
+    private EventConverter eventConverter;
+    private String index;
+    private DateTimeFormatter indexSuffixFormatter;
+    private String url;
     private String user;
     private String password;
-    private String url;
-    private String index;
-    private String indexSuffix;
-    private DateTimeFormatter indexSuffixFormatter;
+    private boolean parallelExecution;
     private int batchSize;
-    private EventConverter eventConverter;
+    private long batchDelay;
+    private long batchInitialDelay;
 
     /**
      * Sets the event converter by instantiating the given class name.
@@ -47,7 +52,6 @@ public class ElasticsearchConfiguration {
      * @param indexSuffix The index suffix
      */
     public void setIndexSuffix(String indexSuffix) {
-        this.indexSuffix = indexSuffix;
         this.indexSuffixFormatter = DateTimeFormatter.ofPattern(indexSuffix);
     }
 

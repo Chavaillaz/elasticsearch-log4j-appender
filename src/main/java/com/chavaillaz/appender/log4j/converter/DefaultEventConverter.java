@@ -1,15 +1,17 @@
 package com.chavaillaz.appender.log4j.converter;
 
 import com.chavaillaz.appender.log4j.ElasticsearchAppender;
-import org.apache.log4j.spi.LoggingEvent;
-import org.apache.log4j.spi.ThrowableInformation;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.message.Message;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Date;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Default converter converting the following fields:
@@ -38,7 +40,7 @@ public class DefaultEventConverter implements EventConverter {
     }
 
     @Override
-    public Map<String, Object> convert(ElasticsearchAppender appender, LoggingEvent event) {
+    public Map<String, Object> convert(ElasticsearchAppender appender, LogEvent event) {
         Map<String, Object> data = new HashMap<>();
         writeBasic(data, appender, event);
         writeThrowable(data, event);
@@ -46,27 +48,31 @@ public class DefaultEventConverter implements EventConverter {
         return data;
     }
 
-    protected void writeBasic(Map<String, Object> json, ElasticsearchAppender appender, LoggingEvent event) {
-        json.put(getDateField(), new Date(event.getTimeStamp()).toInstant().toString());
-        json.put("host", appender.getHostName());
-        json.put("environment", appender.getEnvironmentName());
-        json.put("application", appender.getApplicationName());
-        json.put("logger", event.getLoggerName());
-        json.put("level", event.getLevel().toString());
-        json.put("logmessage", event.getMessage());
+    protected void writeBasic(Map<String, Object> json, ElasticsearchAppender appender, LogEvent event) {
+        json.put(getDateField(), Instant.ofEpochMilli(event.getInstant().getEpochMillisecond()).toString());
+        json.put("host", appender.getConfiguration().getHostName());
+        json.put("environment", appender.getConfiguration().getEnvironmentName());
+        json.put("application", appender.getConfiguration().getApplicationName());
+        json.put("logger", event.getLoggerFqcn());
+        json.put("level", Optional.of(event)
+                .map(LogEvent::getLevel)
+                .map(Level::toString)
+                .orElse(null));
+        json.put("logmessage", Optional.of(event)
+                .map(LogEvent::getMessage)
+                .map(Message::getFormattedMessage));
         json.put("thread", event.getThreadName());
     }
 
-    protected void writeMDC(Map<String, Object> json, LoggingEvent event) {
-        for (Object key : event.getProperties().keySet()) {
-            json.putIfAbsent(key.toString(), event.getProperties().get(key).toString());
+    protected void writeMDC(Map<String, Object> json, LogEvent event) {
+        if (event.getContextData() != null) {
+            event.getContextData().forEach(json::putIfAbsent);
         }
     }
 
-    protected void writeThrowable(Map<String, Object> json, LoggingEvent event) {
-        ThrowableInformation throwableInformation = event.getThrowableInformation();
-        if (throwableInformation != null) {
-            Throwable throwable = throwableInformation.getThrowable();
+    protected void writeThrowable(Map<String, Object> json, LogEvent event) {
+        Throwable throwable = event.getThrown();
+        if (throwable != null) {
             json.put("class", throwable.getClass().getCanonicalName());
             json.put("stacktrace", getStackTrace(throwable));
         }

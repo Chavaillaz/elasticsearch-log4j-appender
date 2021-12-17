@@ -3,7 +3,8 @@ package com.chavaillaz.appender.log4j;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.impl.Log4jLogEvent;
+import org.apache.logging.log4j.message.SimpleMessage;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
@@ -17,8 +18,8 @@ import static com.chavaillaz.appender.log4j.ElasticsearchUtils.createClient;
 import static java.lang.Thread.sleep;
 import static java.net.InetAddress.getLocalHost;
 import static java.util.stream.Collectors.toList;
-import static org.apache.log4j.Level.INFO;
-import static org.apache.log4j.LogManager.getRootLogger;
+import static org.apache.logging.log4j.Level.INFO;
+import static org.apache.logging.log4j.LogManager.getRootLogger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -32,16 +33,18 @@ class ElasticsearchAppenderTest {
             .withTag("7.15.2");
 
     protected static ElasticsearchAppender createAppender(String application, String hostname, String elastic) {
-        ElasticsearchAppender appender = new ElasticsearchAppender();
-        appender.setApplicationName(application);
-        appender.setHostName(hostname);
-        appender.setElasticUrl(elastic);
+        ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder();
+        builder.setName("ElasticAppender");
+        builder.setApplicationName(application);
+        builder.setHostName(hostname);
+        builder.setElasticUrl(elastic);
         // Default user and password for the docker image from Elastic
-        appender.setElasticUser(ELASTICSEARCH_USERNAME);
-        appender.setElasticPassword(ELASTICSEARCH_PASSWORD);
+        builder.setElasticUser(ELASTICSEARCH_USERNAME);
+        builder.setElasticPassword(ELASTICSEARCH_PASSWORD);
         // Need to be done synchronously for the test
-        appender.setElasticParallelExecution(false);
-        appender.activateOptions();
+        builder.setElasticParallelExecution(false);
+        ElasticsearchAppender appender = builder.build();
+        appender.start();
         return appender;
     }
 
@@ -72,16 +75,22 @@ class ElasticsearchAppenderTest {
             MDC.put("key", "value");
 
             // When
-            appender.append(new LoggingEvent(getClass().getSimpleName(), getRootLogger(), INFO, id, new RuntimeException()));
-            appender.close();
+            Log4jLogEvent event = Log4jLogEvent.newBuilder()
+                    .setMessage(new SimpleMessage(id))
+                    .setLoggerName(getRootLogger().getName())
+                    .setThrown(new RuntimeException())
+                    .setLevel(INFO)
+                    .build();
+            appender.append(event);
+            appender.stop();
             sleep(1000);
 
             // Then
-            List<ElasticsearchLog> logs = searchLog(client, appender.getElasticIndex(), id);
+            List<ElasticsearchLog> logs = searchLog(client, appender.getConfiguration().getIndex(), id);
             assertEquals(1, logs.size());
-            assertEquals(appender.getHostName(), logs.get(0).getHost());
-            assertEquals(appender.getEnvironmentName(), logs.get(0).getEnvironment());
-            assertEquals(appender.getApplicationName(), logs.get(0).getApplication());
+            assertEquals(appender.getConfiguration().getHostName(), logs.get(0).getHost());
+            assertEquals(appender.getConfiguration().getEnvironmentName(), logs.get(0).getEnvironment());
+            assertEquals(appender.getConfiguration().getApplicationName(), logs.get(0).getApplication());
             assertEquals(INFO.toString(), logs.get(0).getLevel());
             assertEquals(id, logs.get(0).getLogmessage());
             assertEquals("value", logs.get(0).getKey());
