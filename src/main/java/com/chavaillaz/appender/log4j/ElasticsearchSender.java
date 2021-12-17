@@ -91,12 +91,13 @@ public class ElasticsearchSender implements AutoCloseable {
 
     private boolean sendBulk(List<Map<String, Object>> documents) {
         try {
-            BulkRequest.Builder<Object> builder = new BulkRequest.Builder<>();
+            BulkRequest.Builder builder = new BulkRequest.Builder();
             for (Map<String, Object> document : documents) {
                 String dateTime = document.get(configuration.getEventConverter().getDateField()).toString();
-                builder.addOperation(operation -> operation
-                                .index(index -> index.index(configuration.generateIndexName(dateTime))))
-                        .addDocument(document);
+                builder.operations(operation -> operation
+                        .index(index -> index
+                                .index(configuration.generateIndexName(dateTime))
+                                .document(document)));
             }
 
             BulkResponse response = client.bulk(builder.build());

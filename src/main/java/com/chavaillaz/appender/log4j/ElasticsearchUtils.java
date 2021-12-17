@@ -1,9 +1,8 @@
 package com.chavaillaz.appender.log4j;
 
-import co.elastic.clients.base.Transport;
-import co.elastic.clients.base.rest_client.RestClientTransport;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -52,8 +51,7 @@ public class ElasticsearchUtils {
 
         JacksonJsonpMapper jsonMapper = new JacksonJsonpMapper();
         jsonMapper.objectMapper().registerModule(new JavaTimeModule());
-        Transport transport = new RestClientTransport(restClient, jsonMapper);
-        return new ElasticsearchClient(transport);
+        return new ElasticsearchClient(new RestClientTransport(restClient, jsonMapper));
     }
 
     /**

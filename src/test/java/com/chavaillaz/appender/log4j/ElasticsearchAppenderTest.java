@@ -51,7 +51,7 @@ class ElasticsearchAppenderTest {
                                 .query(query -> query
                                         .match(term -> term
                                                 .field("logmessage")
-                                                .query(id))),
+                                                .query(value -> value.stringValue(id)))),
                         ElasticsearchLog.class)
                 .hits()
                 .hits()
