@@ -70,6 +70,7 @@ class ElasticsearchAppenderTest {
 
             // Given
             String id = UUID.randomUUID().toString();
+            String logger = getRootLogger().getClass().getCanonicalName();
             ElasticsearchClient client = createClient(container.getHttpHostAddress(), ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD);
             ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), container.getHttpHostAddress());
             MDC.put("key", "value");
@@ -77,7 +78,7 @@ class ElasticsearchAppenderTest {
             // When
             Log4jLogEvent event = Log4jLogEvent.newBuilder()
                     .setMessage(new SimpleMessage(id))
-                    .setLoggerName(getRootLogger().getName())
+                    .setLoggerFqcn(logger)
                     .setThrown(new RuntimeException())
                     .setLevel(INFO)
                     .build();
@@ -88,13 +89,15 @@ class ElasticsearchAppenderTest {
             // Then
             List<ElasticsearchLog> logs = searchLog(client, appender.getConfiguration().getIndex(), id);
             assertEquals(1, logs.size());
-            assertEquals(appender.getConfiguration().getHostName(), logs.get(0).getHost());
-            assertEquals(appender.getConfiguration().getEnvironmentName(), logs.get(0).getEnvironment());
-            assertEquals(appender.getConfiguration().getApplicationName(), logs.get(0).getApplication());
-            assertEquals(INFO.toString(), logs.get(0).getLevel());
-            assertEquals(id, logs.get(0).getLogmessage());
-            assertEquals("value", logs.get(0).getKey());
-            assertNotNull(logs.get(0).getStacktrace());
+            ElasticsearchLog log = logs.get(0);
+            assertEquals(appender.getConfiguration().getHostName(), log.getHost());
+            assertEquals(appender.getConfiguration().getEnvironmentName(), log.getEnvironment());
+            assertEquals(appender.getConfiguration().getApplicationName(), log.getApplication());
+            assertEquals(logger, log.getLogger());
+            assertEquals(INFO.toString(), log.getLevel());
+            assertEquals(id, log.getLogmessage());
+            assertEquals("value", log.getKey());
+            assertNotNull(log.getStacktrace());
         }
     }
 

@@ -60,7 +60,8 @@ public class DefaultEventConverter implements EventConverter {
                 .orElse(null));
         json.put("logmessage", Optional.of(event)
                 .map(LogEvent::getMessage)
-                .map(Message::getFormattedMessage));
+                .map(Message::getFormattedMessage)
+                .orElse(null));
         json.put("thread", event.getThreadName());
     }
 
