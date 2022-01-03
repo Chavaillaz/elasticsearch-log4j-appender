@@ -5,7 +5,8 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.SimpleMessage;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.MDC;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -32,7 +33,8 @@ class ElasticsearchAppenderTest {
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
             .withTag("7.15.2");
 
-    protected static ElasticsearchAppender createAppender(String application, String hostname, String elastic) {
+
+    protected static ElasticsearchAppender createAppender(String application, String hostname, String elastic, boolean parallel) {
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder();
         builder.setName("ElasticAppender");
         builder.setApplicationName(application);
@@ -42,7 +44,9 @@ class ElasticsearchAppenderTest {
         builder.setElasticUser(ELASTICSEARCH_USERNAME);
         builder.setElasticPassword(ELASTICSEARCH_PASSWORD);
         // Need to be done synchronously for the test
-        builder.setElasticParallelExecution(false);
+        builder.setElasticParallelExecution(parallel);
+        builder.setElasticBatchDelay(10);
+        builder.setElasticBatchSize(5);
         ElasticsearchAppender appender = builder.build();
         appender.start();
         return appender;
@@ -63,8 +67,9 @@ class ElasticsearchAppenderTest {
                 .collect(toList());
     }
 
-    @Test
-    void systemTestWithElasticsearch() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void systemTestWithElasticsearch(boolean parallel) throws Exception {
         try (ElasticsearchContainer container = new ElasticsearchContainer(ELASTICSEARCH_IMAGE)) {
             container.start();
 
@@ -72,7 +77,7 @@ class ElasticsearchAppenderTest {
             String id = UUID.randomUUID().toString();
             String logger = getRootLogger().getClass().getCanonicalName();
             ElasticsearchClient client = createClient(container.getHttpHostAddress(), ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD);
-            ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), container.getHttpHostAddress());
+            ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), container.getHttpHostAddress(), parallel);
             MDC.put("key", "value");
 
             // When
@@ -83,8 +88,8 @@ class ElasticsearchAppenderTest {
                     .setLevel(INFO)
                     .build();
             appender.append(event);
+            sleep(5000);
             appender.stop();
-            sleep(1000);
 
             // Then
             List<ElasticsearchLog> logs = searchLog(client, appender.getConfiguration().getIndex(), id);

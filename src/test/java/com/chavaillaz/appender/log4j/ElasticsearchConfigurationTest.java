@@ -1,5 +1,7 @@
 package com.chavaillaz.appender.log4j;
 
+import com.chavaillaz.appender.log4j.converter.DefaultEventConverter;
+import com.chavaillaz.appender.log4j.converter.EventConverter;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -26,6 +28,19 @@ class ElasticsearchConfigurationTest {
 
         // Then
         assertThat(indexName).isEqualTo(index + "-" + formatter.format(date));
+    }
+
+    @Test
+    void testWrongConverter() {
+        // Given
+        ElasticsearchConfiguration configuration = new ElasticsearchConfiguration();
+        configuration.setEventConverter("package.does.not.exist.NotFoundConverter");
+
+        // When
+        EventConverter converter = configuration.getEventConverter();
+
+        // Then
+        assertThat(converter.getClass()).isEqualTo(DefaultEventConverter.class);
     }
 
 }
