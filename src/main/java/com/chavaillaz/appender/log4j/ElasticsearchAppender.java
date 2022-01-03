@@ -54,15 +54,6 @@ public class ElasticsearchAppender extends AbstractAppender {
     }
 
     /**
-     * Indicates if the current appender use credentials to send events to Elasticsearch.
-     *
-     * @return {@code true} if the user and the password are configured, {@code false} otherwise
-     */
-    public boolean hasCredentials() {
-        return configuration.getUser() != null && configuration.getPassword() != null;
-    }
-
-    /**
      * Gets the Elasticsearch sender.
      *
      * @return The client to send messages

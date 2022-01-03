@@ -63,9 +63,9 @@ public class ElasticsearchConfiguration {
      * @return The computed index name
      */
     public String generateIndexName(String utcDateTime) {
-        if (utcDateTime != null && indexSuffixFormatter != null) {
+        if (utcDateTime != null && getIndexSuffixFormatter() != null) {
             OffsetDateTime odt = OffsetDateTime.parse(utcDateTime);
-            return getIndex() + odt.format(indexSuffixFormatter);
+            return getIndex() + odt.format(getIndexSuffixFormatter());
         } else {
             return getIndex();
         }

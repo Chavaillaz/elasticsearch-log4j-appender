@@ -1,7 +1,6 @@
 package com.chavaillaz.appender.log4j;
 
 import com.chavaillaz.appender.log4j.converter.EventConverter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.core.LogEvent;
 
 import java.util.concurrent.Callable;
@@ -9,7 +8,6 @@ import java.util.concurrent.Callable;
 /**
  * Simple callable that inserts the logging event into Elasticsearch.
  */
-@Slf4j
 public class ElasticsearchAppenderTask implements Callable<LogEvent> {
 
     private final ElasticsearchAppender appender;
