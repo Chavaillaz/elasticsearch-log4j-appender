@@ -1,8 +1,8 @@
 package com.chavaillaz.appender.log4j;
 
 import com.chavaillaz.appender.log4j.converter.DefaultEventConverter;
-import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.ToString.Exclude;
 import lombok.extern.slf4j.Slf4j;
@@ -118,7 +118,8 @@ public class ElasticsearchAppender extends AbstractAppender {
         return true;
     }
 
-    @Data
+    @Setter
+    @Getter
     public static class Builder implements org.apache.logging.log4j.core.util.Builder<ElasticsearchAppender> {
 
         @PluginBuilderAttribute
