@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.ToString.Exclude;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -32,7 +32,7 @@ import static org.apache.logging.log4j.core.layout.PatternLayout.createDefaultLa
 /**
  * Appender using Elasticsearch to store logging events.
  */
-@Slf4j
+@Log4j2
 @Getter
 @ToString
 @Plugin(name = "ElasticsearchAppender", category = CATEGORY_NAME, elementType = ELEMENT_TYPE)

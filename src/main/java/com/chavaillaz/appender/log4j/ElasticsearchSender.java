@@ -4,7 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import static java.util.Collections.singletonList;
 /**
  * Data sender to Elasticsearch.
  */
-@Slf4j
+@Log4j2
 public class ElasticsearchSender implements AutoCloseable {
 
     private final List<Map<String, Object>> batch = new ArrayList<>();

@@ -5,7 +5,7 @@ import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -18,7 +18,7 @@ import java.util.Optional;
 
 import static org.apache.http.auth.AuthScope.ANY;
 
-@Slf4j
+@Log4j2
 @UtilityClass
 public class ElasticsearchUtils {
 

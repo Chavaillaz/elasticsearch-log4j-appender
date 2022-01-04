@@ -2,12 +2,11 @@ package com.chavaillaz.appender.log4j;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.SimpleMessage;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.MDC;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -24,7 +23,6 @@ import static org.apache.logging.log4j.LogManager.getRootLogger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@Slf4j
 class ElasticsearchAppenderTest {
 
     public static final String ELASTICSEARCH_USERNAME = "elastic";
@@ -32,7 +30,6 @@ class ElasticsearchAppenderTest {
     public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
             .withTag("7.15.2");
-
 
     protected static ElasticsearchAppender createAppender(String application, String hostname, String elastic, boolean parallel) {
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder();
@@ -78,7 +75,7 @@ class ElasticsearchAppenderTest {
             String logger = getRootLogger().getClass().getCanonicalName();
             ElasticsearchClient client = createClient(container.getHttpHostAddress(), ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD);
             ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), container.getHttpHostAddress(), parallel);
-            MDC.put("key", "value");
+            ThreadContext.put("key", "value");
 
             // When
             Log4jLogEvent event = Log4jLogEvent.newBuilder()
