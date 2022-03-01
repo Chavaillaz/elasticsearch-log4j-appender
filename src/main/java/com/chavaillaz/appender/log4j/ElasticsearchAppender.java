@@ -10,6 +10,7 @@ import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
@@ -26,7 +27,6 @@ import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.logging.log4j.core.Appender.ELEMENT_TYPE;
 import static org.apache.logging.log4j.core.Core.CATEGORY_NAME;
-import static org.apache.logging.log4j.core.config.Property.EMPTY_ARRAY;
 import static org.apache.logging.log4j.core.layout.PatternLayout.createDefaultLayout;
 
 /**
@@ -44,7 +44,7 @@ public class ElasticsearchAppender extends AbstractAppender {
     private ElasticsearchSender client;
 
     protected ElasticsearchAppender(String name, Filter filter, Layout<?> layout, ElasticsearchConfiguration configuration) {
-        super(name, filter, layout, true, EMPTY_ARRAY);
+        super(name, filter, layout, true, Property.EMPTY_ARRAY);
         this.configuration = configuration;
     }
 

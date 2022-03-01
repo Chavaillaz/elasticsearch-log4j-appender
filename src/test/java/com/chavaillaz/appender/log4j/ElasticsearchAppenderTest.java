@@ -29,7 +29,7 @@ class ElasticsearchAppenderTest {
     public static final String ELASTICSEARCH_PASSWORD = "changeme";
     public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
-            .withTag("7.15.2");
+            .withTag("7.17.0");
 
     protected static ElasticsearchAppender createAppender(String application, String hostname, String elastic, boolean parallel) {
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder();
