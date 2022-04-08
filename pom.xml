@@ -37,8 +37,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <elasticsearch.version>7.17.1</elasticsearch.version>
-        <jackson.version>2.13.1</jackson.version>
+        <elasticsearch.version>8.1.2</elasticsearch.version>
+        <jackson.version>2.13.2</jackson.version>
         <lombok.version>1.18.22</lombok.version>
     </properties>
 
@@ -114,7 +114,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>elasticsearch</artifactId>
-            <version>1.16.3</version>
+            <version>1.17.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -130,7 +130,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.3.1</version>
+            <version>4.4.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -290,5 +290,12 @@
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>jitpack</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
 </project>

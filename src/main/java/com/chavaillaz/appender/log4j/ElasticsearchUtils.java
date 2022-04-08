@@ -4,14 +4,19 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.client.RestClient;
 
+import javax.net.ssl.SSLContext;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Optional;
@@ -42,16 +47,36 @@ public class ElasticsearchUtils {
      * @return The Elasticsearch client with the given configuration
      */
     public static ElasticsearchClient createClient(String url, String username, String password) {
+        return createClient(url, createSSLContext(), username, password);
+    }
+
+    public static ElasticsearchClient createClient(String url, SSLContext sslContext, String username, String password) {
         CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(ANY, new UsernamePasswordCredentials(username, password));
+        return createClient(createRestClient(url, sslContext, credentialsProvider));
+    }
 
-        RestClient restClient = RestClient.builder(HttpHost.create(url))
-                .setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider))
-                .build();
-
+    public static ElasticsearchClient createClient(RestClient restClient) {
         JacksonJsonpMapper jsonMapper = new JacksonJsonpMapper();
         jsonMapper.objectMapper().registerModule(new JavaTimeModule());
         return new ElasticsearchClient(new RestClientTransport(restClient, jsonMapper));
+    }
+
+    public static RestClient createRestClient(String url, SSLContext sslContext, CredentialsProvider credentialsProvider) {
+        return RestClient.builder(HttpHost.create(url))
+                .setHttpClientConfigCallback(httpClientBuilder ->
+                        httpClientBuilder
+                                .setDefaultCredentialsProvider(credentialsProvider)
+                                .setSSLContext(sslContext)
+                                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE))
+                .build();
+    }
+
+    @SneakyThrows
+    public static SSLContext createSSLContext() {
+        return new SSLContextBuilder()
+                .loadTrustMaterial(null, TrustAllStrategy.INSTANCE)
+                .build();
     }
 
     /**

@@ -2,6 +2,8 @@ package com.chavaillaz.appender.log4j;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.SimpleMessage;
@@ -10,6 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +32,7 @@ class ElasticsearchAppenderTest {
     public static final String ELASTICSEARCH_PASSWORD = "changeme";
     public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
-            .withTag("7.17.0");
+            .withTag("8.1.2");
 
     protected static ElasticsearchAppender createAppender(String application, String hostname, String elastic, boolean parallel) {
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder();
@@ -73,8 +76,10 @@ class ElasticsearchAppenderTest {
             // Given
             String id = UUID.randomUUID().toString();
             String logger = getRootLogger().getClass().getCanonicalName();
-            ElasticsearchClient client = createClient(container.getHttpHostAddress(), ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD);
-            ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), container.getHttpHostAddress(), parallel);
+            String address = "https://" + container.getHttpHostAddress();
+            SSLContext ssl = new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build(); //container.createSslContextFromCa()
+            ElasticsearchClient client = createClient(address, ssl, ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD);
+            ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), address, parallel);
             ThreadContext.put("key", "value");
 
             // When
