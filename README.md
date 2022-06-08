@@ -8,10 +8,11 @@
 Elasticsearch appender allows you to send log events directly from Log4j to an elastic cluster. The delivery of logs is
 asynchronous (i.e. not on the main thread) and therefore will not block execution of the program.
 
-| Appender version | Log4j version |
-|------------------|---------------|
-| 1.x              | 1.x           |
-| 2.x              | 2.x           |
+| Appender version | Log4j version | Elasticsearch version |
+|------------------|---------------|-----------------------|
+| 1.0.0            | 1.2.17        | 7.x                   |
+| 2.0.0            | 2.17.1        | 7.x                   |
+| 2.1.0            | 2.17.2        | 8.x                   |
 
 ## Installation
 
