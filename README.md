@@ -13,6 +13,7 @@ asynchronous (i.e. not on the main thread) and therefore will not block executio
 | 1.0.0            | 1.2.17        | 7.x                   |
 | 2.0.0            | 2.17.1        | 7.x                   |
 | 2.1.0            | 2.17.2        | 8.x                   |
+| 2.1.1            | 2.19.0        | 8.x                   |
 
 ## Installation
 
