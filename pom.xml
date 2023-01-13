@@ -37,7 +37,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <elasticsearch.version>8.5.3</elasticsearch.version>
+        <elasticsearch.version>8.6.0</elasticsearch.version>
         <lombok.version>1.18.24</lombok.version>
     </properties>
 
@@ -60,7 +60,7 @@
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.9.1</version>
+                <version>5.9.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -144,13 +144,13 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.10.0</version>
+            <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.23.1</version>
+            <version>3.24.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -182,13 +182,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.5.0</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.2</version>
             </plugin>
         </plugins>
     </build>
@@ -201,7 +201,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.4.0</version>
+                        <version>3.4.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -259,7 +259,7 @@
                             <dependency>
                                 <groupId>com.thoughtworks.xstream</groupId>
                                 <artifactId>xstream</artifactId>
-                                <version>1.4.18</version>
+                                <version>1.4.20</version>
                             </dependency>
                         </dependencies>
                     </plugin>

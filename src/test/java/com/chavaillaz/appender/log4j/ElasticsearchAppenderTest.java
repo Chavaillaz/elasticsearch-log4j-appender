@@ -1,7 +1,21 @@
 package com.chavaillaz.appender.log4j;
 
+import static com.chavaillaz.appender.log4j.ElasticsearchUtils.createClient;
+import static java.lang.Thread.sleep;
+import static java.net.InetAddress.getLocalHost;
+import static java.util.stream.Collectors.toList;
+import static org.apache.logging.log4j.Level.INFO;
+import static org.apache.logging.log4j.LogManager.getRootLogger;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import javax.net.ssl.SSLContext;
 import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.logging.log4j.ThreadContext;
@@ -12,27 +26,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import javax.net.ssl.SSLContext;
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-
-import static com.chavaillaz.appender.log4j.ElasticsearchUtils.createClient;
-import static java.lang.Thread.sleep;
-import static java.net.InetAddress.getLocalHost;
-import static java.util.stream.Collectors.toList;
-import static org.apache.logging.log4j.Level.INFO;
-import static org.apache.logging.log4j.LogManager.getRootLogger;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 class ElasticsearchAppenderTest {
 
     public static final String ELASTICSEARCH_USERNAME = "elastic";
     public static final String ELASTICSEARCH_PASSWORD = "changeme";
     public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
-            .withTag("8.5.3");
+            .withTag("8.6.0");
 
     protected static ElasticsearchAppender createAppender(String application, String hostname, String elastic, boolean parallel) {
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder();
@@ -68,7 +68,7 @@ class ElasticsearchAppenderTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { true, false })
+    @ValueSource(booleans = {true, false})
     void systemTestWithElasticsearch(boolean parallel) throws Exception {
         try (ElasticsearchContainer container = new ElasticsearchContainer(ELASTICSEARCH_IMAGE)) {
             container.start();
