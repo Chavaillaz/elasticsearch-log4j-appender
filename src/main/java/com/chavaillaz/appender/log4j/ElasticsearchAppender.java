@@ -1,5 +1,17 @@
 package com.chavaillaz.appender.log4j;
 
+import static com.chavaillaz.appender.log4j.ElasticsearchUtils.getInitialHostname;
+import static com.chavaillaz.appender.log4j.ElasticsearchUtils.getProperty;
+import static java.lang.Thread.currentThread;
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.apache.logging.log4j.core.Appender.ELEMENT_TYPE;
+import static org.apache.logging.log4j.core.Core.CATEGORY_NAME;
+import static org.apache.logging.log4j.core.layout.PatternLayout.createDefaultLayout;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import com.chavaillaz.appender.log4j.converter.DefaultEventConverter;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,18 +28,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
-
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import static com.chavaillaz.appender.log4j.ElasticsearchUtils.getInitialHostname;
-import static com.chavaillaz.appender.log4j.ElasticsearchUtils.getProperty;
-import static java.lang.Thread.currentThread;
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.apache.logging.log4j.core.Appender.ELEMENT_TYPE;
-import static org.apache.logging.log4j.core.Core.CATEGORY_NAME;
-import static org.apache.logging.log4j.core.layout.PatternLayout.createDefaultLayout;
 
 /**
  * Appender using Elasticsearch to store logging events.
@@ -159,6 +159,9 @@ public class ElasticsearchAppender extends AbstractAppender {
         @PluginBuilderAttribute("ElasticPassword")
         private String elasticPassword;
 
+        @PluginBuilderAttribute("ElasticApiKey")
+        private String elasticApiKey;
+
         @PluginBuilderAttribute("ElasticParallelExecution")
         private boolean elasticParallelExecution = true;
 
@@ -183,6 +186,7 @@ public class ElasticsearchAppender extends AbstractAppender {
             configuration.setUrl(getElasticUrl());
             configuration.setUser(getElasticUser());
             configuration.setPassword(getElasticPassword());
+            configuration.setApiKey(getElasticApiKey());
             configuration.setParallelExecution(isElasticParallelExecution());
             configuration.setBatchSize(getElasticBatchSize());
             configuration.setBatchDelay(getElasticBatchDelay());

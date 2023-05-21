@@ -1,17 +1,19 @@
 package com.chavaillaz.appender.log4j;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.elasticsearch.core.BulkResponse;
-import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
+import static com.chavaillaz.appender.log4j.ElasticsearchUtils.createClient;
+import static com.chavaillaz.appender.log4j.ElasticsearchUtils.createSSLContext;
+import static java.util.Collections.singletonList;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.chavaillaz.appender.log4j.ElasticsearchUtils.createClient;
-import static java.util.Collections.singletonList;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Data sender to Elasticsearch.
@@ -41,7 +43,11 @@ public class ElasticsearchSender implements AutoCloseable {
      * This method has to be called before sending data.
      */
     public void open() {
-        client = createClient(configuration.getUrl(), configuration.getUser(), configuration.getPassword());
+        if (isNotBlank(configuration.getApiKey())) {
+            client = createClient(configuration.getUrl(), createSSLContext(), configuration.getApiKey());
+        } else {
+            client = createClient(configuration.getUrl(), createSSLContext(), configuration.getUser(), configuration.getPassword());
+        }
     }
 
     /**

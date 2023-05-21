@@ -1,10 +1,5 @@
 package com.chavaillaz.appender.log4j.converter;
 
-import com.chavaillaz.appender.log4j.ElasticsearchAppender;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.message.Message;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -13,13 +8,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import com.chavaillaz.appender.log4j.ElasticsearchAppender;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.message.Message;
+
 /**
  * Default converter converting the following fields:
  * <ul>
  *     <li><strong>datetime:</strong> Date of logging event</li>
- *     <li><strong>host:</strong> Taken from appender configuration)</li>
- *     <li><strong>environment:</strong> Taken from appender configuration)</li>
- *     <li><strong>application:</strong> Taken from appender configuration)</li>
+ *     <li><strong>host:</strong> Taken from appender configuration</li>
+ *     <li><strong>environment:</strong> Taken from appender configuration</li>
+ *     <li><strong>application:</strong> Taken from appender configuration</li>
  *     <li><strong>logger:</strong> Logger of logging event</li>
  *     <li><strong>level:</strong> Level of logging event</li>
  *     <li><strong>logmessage:</strong> Message of the logging event</li>

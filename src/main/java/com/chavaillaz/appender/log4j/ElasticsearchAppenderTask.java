@@ -1,9 +1,9 @@
 package com.chavaillaz.appender.log4j;
 
+import java.util.concurrent.Callable;
+
 import com.chavaillaz.appender.log4j.converter.EventConverter;
 import org.apache.logging.log4j.core.LogEvent;
-
-import java.util.concurrent.Callable;
 
 /**
  * Simple callable that inserts the logging event into Elasticsearch.

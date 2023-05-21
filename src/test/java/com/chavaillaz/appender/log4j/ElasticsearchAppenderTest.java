@@ -1,23 +1,23 @@
 package com.chavaillaz.appender.log4j;
 
 import static com.chavaillaz.appender.log4j.ElasticsearchUtils.createClient;
-import static java.lang.Thread.sleep;
 import static java.net.InetAddress.getLocalHost;
-import static java.util.stream.Collectors.toList;
+import static java.time.Duration.ofSeconds;
 import static org.apache.logging.log4j.Level.INFO;
 import static org.apache.logging.log4j.LogManager.getRootLogger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.testcontainers.shaded.org.apache.commons.lang3.ThreadUtils.sleep;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.security.CreateApiKeyRequest;
 import javax.net.ssl.SSLContext;
-import org.apache.http.conn.ssl.TrustAllStrategy;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.SimpleMessage;
@@ -32,7 +32,16 @@ class ElasticsearchAppenderTest {
     public static final String ELASTICSEARCH_PASSWORD = "changeme";
     public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
-            .withTag("8.7.0");
+            .withTag("8.7.1");
+
+    protected static String createApiKey(ElasticsearchClient client) throws IOException {
+        return client.security()
+                .createApiKey(new CreateApiKeyRequest.Builder()
+                        .name("TestKey")
+                        .refresh(Refresh.False)
+                        .build())
+                .encoded();
+    }
 
     protected static ElasticsearchAppender createAppender(String application, String hostname, String elastic, boolean parallel) {
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder();
@@ -64,7 +73,7 @@ class ElasticsearchAppenderTest {
                 .hits()
                 .stream()
                 .map(Hit::source)
-                .collect(toList());
+                .toList();
     }
 
     @ParameterizedTest
@@ -77,8 +86,9 @@ class ElasticsearchAppenderTest {
             String id = UUID.randomUUID().toString();
             String logger = getRootLogger().getClass().getCanonicalName();
             String address = "https://" + container.getHttpHostAddress();
-            SSLContext ssl = new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build(); //container.createSslContextFromCa()
+            SSLContext ssl = container.createSslContextFromCa();
             ElasticsearchClient client = createClient(address, ssl, ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD);
+            ElasticsearchClient apiClient = createClient(address, ssl, createApiKey(client));
             ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), address, parallel);
             ThreadContext.put("key", "value");
 
@@ -90,11 +100,11 @@ class ElasticsearchAppenderTest {
                     .setLevel(INFO)
                     .build();
             appender.append(event);
-            sleep(5000);
+            sleep(ofSeconds(5));
             appender.stop();
 
             // Then
-            List<ElasticsearchLog> logs = searchLog(client, appender.getConfiguration().getIndex(), id);
+            List<ElasticsearchLog> logs = searchLog(apiClient, appender.getConfiguration().getIndex(), id);
             assertEquals(1, logs.size());
             ElasticsearchLog log = logs.get(0);
             assertEquals(appender.getConfiguration().getHostName(), log.getHost());

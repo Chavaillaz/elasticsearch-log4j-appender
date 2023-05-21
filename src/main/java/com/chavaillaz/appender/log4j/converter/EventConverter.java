@@ -1,9 +1,9 @@
 package com.chavaillaz.appender.log4j.converter;
 
+import java.util.Map;
+
 import com.chavaillaz.appender.log4j.ElasticsearchAppender;
 import org.apache.logging.log4j.core.LogEvent;
-
-import java.util.Map;
 
 /**
  * Interface to implement in order to customize the creation of key/value document from the event that will be stored.

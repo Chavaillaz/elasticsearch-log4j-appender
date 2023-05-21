@@ -14,6 +14,7 @@ asynchronous (i.e. not on the main thread) and therefore will not block executio
 | 2.0.0            | 2.17.1        | 7.x                   |
 | 2.1.0            | 2.17.2        | 8.x                   |
 | 2.1.1            | 2.19.0        | 8.x                   |
+| 2.1.2            | 2.20.0        | 8.x                   |
 
 ## Installation
 
@@ -47,7 +48,7 @@ with the following properties **(please note that for Log4j2 they all start with
   They can also both be specified with environment variables or system properties `INDEX` and `INDEX_SUFFIX`.
 - `elasticUrl` is the address of the server (or its load balancer) in the format `[scheme://][host]:[port]`. The scheme
   is optional and defaults to `http`.
-- `elasticUser` and `elasticPassword` are the credentials for the server.
+- `elasticApiKey` (encoded) or `elasticUser` + `elasticPassword` are the credentials for the server.
 - `elasticParallelExecution` (default `true`) specifies the way the messages are sent to the server
   (`true` send them in a separate thread and `false` send them sequentially).
 - `elasticBatchSize` (default `1`) is the number of messages threshold triggering the sending to the server.

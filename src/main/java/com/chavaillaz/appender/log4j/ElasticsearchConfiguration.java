@@ -1,14 +1,14 @@
 package com.chavaillaz.appender.log4j;
 
+import java.lang.reflect.Constructor;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+
 import com.chavaillaz.appender.log4j.converter.DefaultEventConverter;
 import com.chavaillaz.appender.log4j.converter.EventConverter;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
-
-import java.lang.reflect.Constructor;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Log4j2
 @Getter
@@ -24,6 +24,7 @@ public class ElasticsearchConfiguration {
     private String url;
     private String user;
     private String password;
+    private String apiKey;
     private boolean parallelExecution;
     private int batchSize;
     private long batchDelay;
