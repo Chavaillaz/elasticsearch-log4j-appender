@@ -1,4 +1,4 @@
-package com.chavaillaz.appender.log4j.converter;
+package com.chavaillaz.appender.log4j;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -8,13 +8,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import com.chavaillaz.appender.log4j.ElasticsearchAppender;
+import com.chavaillaz.appender.LogConfiguration;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.message.Message;
 
 /**
- * Default converter converting the following fields:
+ * Default implementation converting the following fields:
  * <ul>
  *     <li><strong>datetime:</strong> Date of logging event</li>
  *     <li><strong>host:</strong> Taken from appender configuration</li>
@@ -32,27 +32,29 @@ import org.apache.logging.log4j.message.Message;
  *     <li><strong>stacktrace:</strong> Stacktrace of the exception</li>
  * </ul>
  */
-public class DefaultEventConverter implements EventConverter {
+public class DefaultLogConverter implements LogConverter {
+
+    private LogConfiguration configuration;
 
     @Override
-    public String getDateField() {
-        return "datetime";
+    public void configure(LogConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     @Override
-    public Map<String, Object> convert(ElasticsearchAppender appender, LogEvent event) {
+    public Map<String, Object> convert(LogEvent event) {
         Map<String, Object> data = new HashMap<>();
-        writeBasic(data, appender, event);
+        writeBasic(data, event);
         writeThrowable(data, event);
         writeMDC(data, event);
         return data;
     }
 
-    protected void writeBasic(Map<String, Object> json, ElasticsearchAppender appender, LogEvent event) {
-        json.put(getDateField(), Instant.ofEpochMilli(event.getInstant().getEpochMillisecond()).toString());
-        json.put("host", appender.getConfiguration().getHostName());
-        json.put("environment", appender.getConfiguration().getEnvironmentName());
-        json.put("application", appender.getConfiguration().getApplicationName());
+    protected void writeBasic(Map<String, Object> json, LogEvent event) {
+        json.put("datetime", Instant.ofEpochMilli(event.getInstant().getEpochMillisecond()).toString());
+        json.put("host", configuration.getHost());
+        json.put("environment", configuration.getEnvironment());
+        json.put("application", configuration.getApplication());
         json.put("logger", event.getLoggerFqcn());
         json.put("level", Optional.of(event)
                 .map(LogEvent::getLevel)

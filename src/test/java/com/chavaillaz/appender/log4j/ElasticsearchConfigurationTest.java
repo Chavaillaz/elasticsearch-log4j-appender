@@ -1,14 +1,13 @@
 package com.chavaillaz.appender.log4j;
 
-import com.chavaillaz.appender.log4j.converter.DefaultEventConverter;
-import com.chavaillaz.appender.log4j.converter.EventConverter;
-import org.junit.jupiter.api.Test;
+import static java.time.OffsetDateTime.now;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
-import static java.time.OffsetDateTime.now;
-import static org.assertj.core.api.Assertions.assertThat;
+import com.chavaillaz.appender.log4j.elastic.ElasticsearchConfiguration;
+import org.junit.jupiter.api.Test;
 
 class ElasticsearchConfigurationTest {
 
@@ -34,13 +33,13 @@ class ElasticsearchConfigurationTest {
     void testWrongConverter() {
         // Given
         ElasticsearchConfiguration configuration = new ElasticsearchConfiguration();
-        configuration.setEventConverter("package.does.not.exist.NotFoundConverter");
+        configuration.setConverter("package.does.not.exist.NotFoundConverter");
 
         // When
-        EventConverter converter = configuration.getEventConverter();
+        LogConverter converter = configuration.getConverter();
 
         // Then
-        assertThat(converter.getClass()).isEqualTo(DefaultEventConverter.class);
+        assertThat(converter.getClass()).isEqualTo(DefaultLogConverter.class);
     }
 
 }

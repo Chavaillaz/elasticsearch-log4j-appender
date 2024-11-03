@@ -1,7 +1,8 @@
-package com.chavaillaz.appender.log4j;
+package com.chavaillaz.appender.log4j.elastic;
 
-import static com.chavaillaz.appender.log4j.ElasticsearchUtils.createClient;
-import static com.chavaillaz.appender.log4j.ElasticsearchUtils.createSSLContext;
+import static com.chavaillaz.appender.CommonUtils.createSSLContext;
+import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createClient;
+import static java.time.OffsetDateTime.now;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -12,14 +13,15 @@ import java.util.Map;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
+import com.chavaillaz.appender.LogDelivery;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Data sender to Elasticsearch.
+ * Implementation of logs transmission for Elasticsearch.
  */
 @Log4j2
-public class ElasticsearchSender implements AutoCloseable {
+public class ElasticsearchLogDelivery implements LogDelivery {
 
     private final List<Map<String, Object>> batch = new ArrayList<>();
 
@@ -27,22 +29,16 @@ public class ElasticsearchSender implements AutoCloseable {
     private final ElasticsearchConfiguration configuration;
 
     @Getter
-    private ElasticsearchClient client;
+    private final ElasticsearchClient client;
 
     /**
-     * Creates a new data sender.
+     * Creates a new logs delivery handler for Elasticsearch.
      *
      * @param configuration The configuration to use
      */
-    public ElasticsearchSender(ElasticsearchConfiguration configuration) {
+    public ElasticsearchLogDelivery(ElasticsearchConfiguration configuration) {
         this.configuration = configuration;
-    }
 
-    /**
-     * Opens the connection to Elasticsearch.
-     * This method has to be called before sending data.
-     */
-    public void open() {
         if (isNotBlank(configuration.getApiKey())) {
             client = createClient(configuration.getUrl(), createSSLContext(), configuration.getApiKey());
         } else {
@@ -50,46 +46,35 @@ public class ElasticsearchSender implements AutoCloseable {
         }
     }
 
-    /**
-     * Sends the record data in Elasticsearch.
-     *
-     * @param record The record data
-     */
-    public void send(Map<String, Object> record) {
-        send(singletonList(record));
+    @Override
+    public void send(Map<String, Object> document) {
+        send(singletonList(document));
     }
 
-    /**
-     * Sends the list of record data in Elasticsearch.
-     *
-     * @param records The list of record data
-     */
-    public void send(List<Map<String, Object>> records) {
-        if (records != null && !records.isEmpty()) {
-            stackAndSend(records);
+    @Override
+    public void send(List<Map<String, Object>> documents) {
+        if (documents != null && !documents.isEmpty()) {
+            stackAndSend(documents);
         }
     }
 
-    /**
-     * Sends a partially filled batch.
-     * Intended to be called periodically to clean out pending log messages
-     */
-    public synchronized void sendPartialBatches() {
+    @Override
+    public synchronized void flush() {
         if (!batch.isEmpty()) {
-            log.debug("Sending partial batch of {}/{}", batch.size(), configuration.getBatchSize());
+            log.debug("Sending partial batch of {}/{}", batch.size(), configuration.getFlushThreshold());
             sendBatch();
         }
     }
 
     private synchronized void stackAndSend(List<Map<String, Object>> data) {
         batch.addAll(data);
-        log.trace("Batch size {}/{}", batch.size(), configuration.getBatchSize());
-        if (batch.size() >= configuration.getBatchSize()) {
+        log.trace("Batch size {}/{}", batch.size(), configuration.getFlushThreshold());
+        if (batch.size() >= configuration.getFlushThreshold()) {
             sendBatch();
         }
     }
 
-    private void sendBatch() {
+    private synchronized void sendBatch() {
         if (!batch.isEmpty() && sendBulk(batch)) {
             batch.clear();
         }
@@ -99,10 +84,9 @@ public class ElasticsearchSender implements AutoCloseable {
         try {
             BulkRequest.Builder builder = new BulkRequest.Builder();
             for (Map<String, Object> document : documents) {
-                String dateTime = document.get(configuration.getEventConverter().getDateField()).toString();
                 builder.operations(operation -> operation
                         .index(index -> index
-                                .index(configuration.generateIndexName(dateTime))
+                                .index(configuration.generateIndexName(now()))
                                 .document(document)));
             }
 
@@ -118,7 +102,7 @@ public class ElasticsearchSender implements AutoCloseable {
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         if (client != null) {
             sendBatch();
         }
