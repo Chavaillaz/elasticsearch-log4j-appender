@@ -32,7 +32,7 @@ class ElasticsearchAppenderTest {
     public static final String ELASTICSEARCH_PASSWORD = "changeme";
     public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
-            .withTag("8.7.1");
+            .withTag("8.15.3");
 
     protected static String createApiKey(ElasticsearchClient client) throws IOException {
         return client.security()

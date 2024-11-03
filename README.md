@@ -15,6 +15,7 @@ asynchronous (i.e. not on the main thread) and therefore will not block executio
 | 2.1.0            | 2.17.2        | 8.x                   |
 | 2.1.1            | 2.19.0        | 8.x                   |
 | 2.1.2            | 2.20.0        | 8.x                   |
+| 2.1.3            | 2.24.1        | 8.x                   |
 
 ## Installation
 
