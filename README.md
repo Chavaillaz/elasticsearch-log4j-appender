@@ -39,7 +39,7 @@ You then have to configure log4j in order to include this appender (see configur
 In the Log4j configuration file, add a new appender `ElasticsearchAppender` using package 
 `com.chavaillaz.appender.log4j.elastic` with the following properties:
 
-| Appender Property | Environment / System variable | Default value               | Description                                                                                                                             |
+| Appender property | Environment / System variable | Default value               | Description                                                                                                                             |
 |-------------------|-------------------------------|-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | Application       | APP                           | `unknown`                   | The name of the application generating the logs.                                                                                        |
 | Host              | HOST                          | Machine host name           | The name of the host on which the application is running.                                                                               |
@@ -60,7 +60,7 @@ Note that `Url` is the only mandatory configuration, except if you need to overw
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="info" packages="com.chavaillaz.appender.log4j">
+<Configuration status="info" packages="com.chavaillaz.appender.log4j.elastic">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
