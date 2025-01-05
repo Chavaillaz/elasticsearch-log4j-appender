@@ -7,14 +7,17 @@ import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import javax.net.ssl.SSLContext;
+import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.client.RestClient;
 
 /**
@@ -76,6 +79,18 @@ public class ElasticsearchUtils {
         JacksonJsonpMapper jsonMapper = new JacksonJsonpMapper();
         jsonMapper.objectMapper().registerModule(new JavaTimeModule());
         return new ElasticsearchClient(new RestClientTransport(restClient, jsonMapper));
+    }
+
+    /**
+     * Creates a permissive SSL context trusting everything.
+     *
+     * @return The SSL context
+     */
+    @SneakyThrows
+    public static SSLContext createPermissiveContext() {
+        return new SSLContextBuilder()
+                .loadTrustMaterial(null, TrustAllStrategy.INSTANCE)
+                .build();
     }
 
 }

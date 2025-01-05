@@ -1,7 +1,7 @@
 package com.chavaillaz.appender.log4j.elastic;
 
-import static com.chavaillaz.appender.CommonUtils.createSSLContext;
 import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createClient;
+import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createPermissiveContext;
 import static java.time.OffsetDateTime.now;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -11,14 +11,14 @@ import java.util.Map;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
-import com.chavaillaz.appender.log4j.AbstractBatchLogDeliveryAppender;
+import com.chavaillaz.appender.log4j.AbstractBatchLogDelivery;
 import lombok.extern.log4j.Log4j2;
 
 /**
  * Implementation of logs transmission for Elasticsearch.
  */
 @Log4j2
-public class ElasticsearchLogDelivery extends AbstractBatchLogDeliveryAppender<ElasticsearchConfiguration> {
+public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<ElasticsearchConfiguration> {
 
     private final ElasticsearchClient client;
 
@@ -31,9 +31,9 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDeliveryAppender<E
         super(configuration);
 
         if (isNotBlank(configuration.getApiKey())) {
-            client = createClient(configuration.getUrl(), createSSLContext(), configuration.getApiKey());
+            client = createClient(configuration.getUrl(), createPermissiveContext(), configuration.getApiKey());
         } else {
-            client = createClient(configuration.getUrl(), createSSLContext(), configuration.getUser(), configuration.getPassword());
+            client = createClient(configuration.getUrl(), createPermissiveContext(), configuration.getUser(), configuration.getPassword());
         }
     }
 

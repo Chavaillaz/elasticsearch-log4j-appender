@@ -85,7 +85,14 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Elastic search client -->
+        <!-- Common appender library -->
+        <dependency>
+            <groupId>com.chavaillaz</groupId>
+            <artifactId>common-log4j-appender</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+        <!-- Elasticsearch client -->
         <dependency>
             <groupId>co.elastic.clients</groupId>
             <artifactId>elasticsearch-java</artifactId>
@@ -103,23 +110,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
-
-        <!-- Apache commons -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.17.0</version>
-        </dependency>
-
-        <!-- Logs -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
         </dependency>
 
         <!-- Testing -->
@@ -146,7 +136,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.27.1</version>
+            <version>3.27.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
