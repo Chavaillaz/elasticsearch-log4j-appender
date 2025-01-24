@@ -63,9 +63,10 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
     }
 
     @Override
-    public void close() {
+    public void close() throws Exception {
+        super.close();
         if (client != null) {
-            super.close();
+            client.close();
         }
     }
 
