@@ -7,6 +7,7 @@ import static org.apache.logging.log4j.core.Core.CATEGORY_NAME;
 import static org.apache.logging.log4j.core.layout.PatternLayout.createDefaultLayout;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import com.chavaillaz.appender.LogDelivery;
 import com.chavaillaz.appender.log4j.AbstractLogDeliveryAppender;
@@ -39,18 +40,16 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
     }
 
     @Override
-    public LogDelivery createDeliveryHandler() {
+    public LogDelivery createLogDeliveryHandler() {
         return new ElasticsearchLogDelivery(getLogConfiguration());
     }
 
     @Override
-    public Runnable createDeliveryTask(LogEvent loggingEvent) {
-        return () -> {
-            if (getLogDeliveryHandler() != null) {
-                LogConverter converter = getLogConfiguration().getConverter();
-                getLogDeliveryHandler().send(converter.convert(loggingEvent));
-            }
-        };
+    public Runnable createLogDeliveryTask(LogEvent loggingEvent) {
+        LogConverter converter = getLogConfiguration().getConverter();
+        LogEvent immutableEvent = loggingEvent.toImmutable();
+        return () -> Optional.ofNullable(getLogDeliveryHandler())
+                .ifPresent(handler -> handler.send(converter.convert(immutableEvent)));
     }
 
     @Setter
