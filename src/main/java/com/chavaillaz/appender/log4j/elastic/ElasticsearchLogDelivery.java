@@ -1,9 +1,7 @@
 package com.chavaillaz.appender.log4j.elastic;
 
 import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createClient;
-import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createPermissiveContext;
 import static java.time.OffsetDateTime.now;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.util.List;
 import java.util.Map;
@@ -28,13 +26,18 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
      * @param configuration The configuration to use
      */
     public ElasticsearchLogDelivery(ElasticsearchConfiguration configuration) {
-        super(configuration);
+        this(configuration, createClient(configuration));
+    }
 
-        if (isNotBlank(configuration.getApiKey())) {
-            client = createClient(configuration.getUrl(), createPermissiveContext(), configuration.getApiKey());
-        } else {
-            client = createClient(configuration.getUrl(), createPermissiveContext(), configuration.getUser(), configuration.getPassword());
-        }
+    /**
+     * Creates a new logs delivery handler for Elasticsearch.
+     *
+     * @param configuration The configuration to use
+     * @param client        The Elasticsearch client to use
+     */
+    public ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, ElasticsearchClient client) {
+        super(configuration);
+        this.client = client;
     }
 
     @Override

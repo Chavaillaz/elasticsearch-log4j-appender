@@ -1,5 +1,6 @@
 package com.chavaillaz.appender.log4j.elastic;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.auth.AuthScope.ANY;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -25,6 +26,20 @@ import org.elasticsearch.client.RestClient;
  */
 @UtilityClass
 public class ElasticsearchUtils {
+
+    /**
+     * Creates a new Elasticsearch client.
+     *
+     * @param configuration The configuration to use
+     * @return The Elasticsearch client with the given configuration
+     */
+    public static ElasticsearchClient createClient(ElasticsearchConfiguration configuration) {
+        if (isNotBlank(configuration.getApiKey())) {
+            return createClient(configuration.getUrl(), createPermissiveContext(), configuration.getApiKey());
+        } else {
+            return createClient(configuration.getUrl(), createPermissiveContext(), configuration.getUser(), configuration.getPassword());
+        }
+    }
 
     /**
      * Creates a new Elasticsearch client.
