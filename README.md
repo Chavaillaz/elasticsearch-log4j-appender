@@ -20,6 +20,7 @@ asynchronous (i.e. not on the main thread) and therefore will not block executio
 | 2.1.2            | 2.20.0        | 8.x                   | [Version 2][v2] |
 | 2.1.3            | 2.24.1        | 8.x                   | [Version 2][v2] |
 | 3.0.0            | 2.24.1        | 8.x                   | See below       |
+| 3.0.1            | 2.24.3        | 8.x                   | See below       |
 
 ## Installation
 
