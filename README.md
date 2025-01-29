@@ -61,18 +61,18 @@ Note that `Url` is the only mandatory configuration, except if you need to overw
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="info" packages="com.chavaillaz.appender.log4j.elastic">
+<Configuration status="INFO">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
-        <ElasticsearchAppender name="Elasticsearch">
+        <ElasticsearchAppender name="ElasticSearch">
             <PatternLayout pattern="%msg"/>
             <Application>myApplication</Application>
             <Environment>local</Environment>
             <Converter>com.chavaillaz.appender.log4j.DefaultLogConverter</Converter>
             <Index>ha</Index>
-            <IndexSuffix>-yyyy.MM.dd</IndexSuffix>
+            <IndexSuffix>-yyyy.MM</IndexSuffix>
             <Url>http://localhost:9300</Url>
             <User>elastic</User>
             <Password>changeme</Password>
@@ -81,10 +81,13 @@ Note that `Url` is the only mandatory configuration, except if you need to overw
         </ElasticsearchAppender>
     </Appenders>
     <Loggers>
-        <Root level="info">
+        <Root level="INFO">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="Elasticsearch" additivity="false"/>
+            <AppenderRef ref="ElasticSearch"/>
         </Root>
+        <Logger name="com.chavaillaz.appender" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
     </Loggers>
 </Configuration>
 ```
