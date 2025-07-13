@@ -41,7 +41,7 @@
         <log4j.version>2.25.1</log4j.version>
 
         <!-- Elasticsearch image versions need also to be updated in ElasticAppenderTest -->
-        <elasticsearch.version>8.18.3</elasticsearch.version>
+        <elasticsearch.version>9.0.3</elasticsearch.version>
     </properties>
 
     <dependencyManagement>

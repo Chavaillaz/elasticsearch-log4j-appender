@@ -22,6 +22,7 @@ asynchronous (i.e. not on the main thread) and therefore will not block executio
 | 3.0.0            | 2.24.1        | 8.x             | 17+          | See below       |
 | 3.0.1            | 2.24.3        | 8.x             | 17+          | See below       |
 | 3.0.2            | 2.15.1        | 8.x             | 17+          | See below       |
+| 3.1.0            | 2.15.1        | 9.x             | 17+          | See below       |
 
 ## Installation
 
@@ -34,7 +35,7 @@ The dependency is available in maven central (see badge and table above for the 
 </dependency>
 ```
 
-You then have to configure log4j in order to include this appender (see configuration section below).
+You then have to configure log4j to include this appender (see configuration section below).
 
 ## Configuration
 
@@ -56,7 +57,7 @@ In the Log4j configuration file, add a new appender `ElasticsearchAppender` usin
 | FlushThreshold    | -                             | `100`                       | The threshold number of messages triggering the transmission of documents to the server.                                                |
 | FlushInterval     | -                             | `5000`                      | The time (ms) between two automatic flushes, which are triggering the transmission of logs, even if not reaching the defined threshold. |
 
-Note that `Url` is the only mandatory configuration, except if you need to overwrite the default value of another ones.
+Note that `Url` is the only mandatory configuration, except if you need to overwrite the default value of other ones.
 
 ## XML file example
 
