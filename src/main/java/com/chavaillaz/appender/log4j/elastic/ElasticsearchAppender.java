@@ -15,6 +15,7 @@ import com.chavaillaz.appender.log4j.DefaultLogConverter;
 import com.chavaillaz.appender.log4j.LogConverter;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -52,8 +53,9 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
                 .ifPresent(handler -> handler.send(converter.convert(immutableEvent)));
     }
 
-    @Setter
     @Getter
+    @Setter
+    @Accessors(chain = true)
     public static class Builder implements org.apache.logging.log4j.core.util.Builder<ElasticsearchAppender> {
 
         @PluginBuilderAttribute
