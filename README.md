@@ -11,16 +11,17 @@
 Elasticsearch appender allows you to send log events directly from Log4j to an elastic cluster. The delivery of logs is
 asynchronous (i.e. not on the main thread) and therefore will not block execution of the program.
 
-| Appender version | Log4j version | Elasticsearch version | Documentation   |
-|------------------|---------------|-----------------------|-----------------|
-| 1.0.0            | 1.2.17        | 7.x                   | [Version 1][v1] |
-| 2.0.0            | 2.17.1        | 7.x                   | [Version 2][v2] |
-| 2.1.0            | 2.17.2        | 8.x                   | [Version 2][v2] |
-| 2.1.1            | 2.19.0        | 8.x                   | [Version 2][v2] |
-| 2.1.2            | 2.20.0        | 8.x                   | [Version 2][v2] |
-| 2.1.3            | 2.24.1        | 8.x                   | [Version 2][v2] |
-| 3.0.0            | 2.24.1        | 8.x                   | See below       |
-| 3.0.1            | 2.24.3        | 8.x                   | See below       |
+| Appender version | Log4j version | Elastic version | Java version | Documentation   |
+|------------------|---------------|-----------------|--------------|-----------------|
+| 1.0.0            | 1.2.17        | 7.x             | 11+          | [Version 1][v1] |
+| 2.0.0            | 2.17.1        | 7.x             | 17+          | [Version 2][v2] |
+| 2.1.0            | 2.17.2        | 8.x             | 17+          | [Version 2][v2] |
+| 2.1.1            | 2.19.0        | 8.x             | 17+          | [Version 2][v2] |
+| 2.1.2            | 2.20.0        | 8.x             | 17+          | [Version 2][v2] |
+| 2.1.3            | 2.24.1        | 8.x             | 17+          | [Version 2][v2] |
+| 3.0.0            | 2.24.1        | 8.x             | 17+          | See below       |
+| 3.0.1            | 2.24.3        | 8.x             | 17+          | See below       |
+| 3.0.2            | 2.15.1        | 8.x             | 17+          | See below       |
 
 ## Installation
 
