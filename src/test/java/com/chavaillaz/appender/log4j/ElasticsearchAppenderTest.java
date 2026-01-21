@@ -3,11 +3,11 @@ package com.chavaillaz.appender.log4j;
 import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createClient;
 import static java.net.InetAddress.getLocalHost;
 import static java.time.Duration.ofSeconds;
+import static org.apache.commons.lang3.ThreadUtils.sleep;
 import static org.apache.logging.log4j.Level.INFO;
 import static org.apache.logging.log4j.LogManager.getRootLogger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.testcontainers.shaded.org.apache.commons.lang3.ThreadUtils.sleep;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +33,7 @@ class ElasticsearchAppenderTest {
     public static final String ELASTICSEARCH_PASSWORD = "changeme";
     public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
-            .withTag("9.0.3");
+            .withTag("9.2.4");
 
     protected static String createApiKey(ElasticsearchClient client) throws IOException {
         return client.security()
