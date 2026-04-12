@@ -24,6 +24,7 @@ asynchronous (i.e. not on the main thread) and therefore will not block executio
 | 3.0.2            | 2.15.1        | 8.x             | 17+          | See below       |
 | 3.1.0            | 2.15.1        | 9.x             | 17+          | See below       |
 | 3.1.1            | 2.15.3        | 9.x             | 17+          | See below       |
+| 3.1.2            | 2.15.4        | 9.x             | 17+          | See below       |
 
 ## Installation
 
