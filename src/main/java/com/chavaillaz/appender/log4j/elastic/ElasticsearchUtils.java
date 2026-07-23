@@ -4,7 +4,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.auth.AuthScope.ANY;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import javax.net.ssl.SSLContext;
 import lombok.SneakyThrows;
@@ -90,7 +90,7 @@ public class ElasticsearchUtils {
      * @return The Elasticsearch client with the given configuration
      */
     public static ElasticsearchClient createClient(RestClient restClient) {
-        return new ElasticsearchClient(new RestClientTransport(restClient, new JacksonJsonpMapper()));
+        return new ElasticsearchClient(new RestClientTransport(restClient, new Jackson3JsonpMapper()));
     }
 
     /**
