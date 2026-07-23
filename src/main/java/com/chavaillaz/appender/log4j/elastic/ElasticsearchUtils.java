@@ -6,7 +6,6 @@ import static org.apache.http.auth.AuthScope.ANY;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import javax.net.ssl.SSLContext;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
@@ -91,9 +90,7 @@ public class ElasticsearchUtils {
      * @return The Elasticsearch client with the given configuration
      */
     public static ElasticsearchClient createClient(RestClient restClient) {
-        JacksonJsonpMapper jsonMapper = new JacksonJsonpMapper();
-        jsonMapper.objectMapper().registerModule(new JavaTimeModule());
-        return new ElasticsearchClient(new RestClientTransport(restClient, jsonMapper));
+        return new ElasticsearchClient(new RestClientTransport(restClient, new JacksonJsonpMapper()));
     }
 
     /**
