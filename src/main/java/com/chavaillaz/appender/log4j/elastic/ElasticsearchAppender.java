@@ -17,6 +17,7 @@ import com.chavaillaz.appender.log4j.LogConverter;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
@@ -93,6 +94,11 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
     @Accessors(chain = true)
     public static class Builder implements org.apache.logging.log4j.core.util.Builder<ElasticsearchAppender> {
 
+        /**
+         * The delivery options an attribute left unset keeps the value of.
+         */
+        private static final DeliveryOptions DEFAULTS = DeliveryOptions.defaults();
+
         @PluginBuilderAttribute
         @Required(message = "No appender name provided")
         private String name;
@@ -142,6 +148,45 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
         @PluginBuilderAttribute("FlushInterval")
         private long flushInterval = 5_000;
 
+        @PluginBuilderAttribute("FlushLevel")
+        private String flushLevel;
+
+        @PluginBuilderAttribute("MaxConcurrentTransmissions")
+        private int maxConcurrentTransmissions = DEFAULTS.maxConcurrentTransmissions();
+
+        @PluginBuilderAttribute("MaxPendingDocuments")
+        private int maxPendingDocuments = DEFAULTS.maxPendingDocuments();
+
+        @PluginBuilderAttribute("MaxRequestDocuments")
+        private int maxRequestDocuments = DEFAULTS.maxRequestDocuments();
+
+        @PluginBuilderAttribute("MaxPendingBytes")
+        private long maxPendingBytes = DEFAULTS.maxPendingBytes();
+
+        @PluginBuilderAttribute("MaxRequestBytes")
+        private long maxRequestBytes = DEFAULTS.maxRequestBytes();
+
+        @PluginBuilderAttribute("MaxConsecutiveFailures")
+        private int maxConsecutiveFailures = DEFAULTS.maxConsecutiveFailures();
+
+        @PluginBuilderAttribute("MaxQueuedEvents")
+        private int maxQueuedEvents = DEFAULTS.maxQueuedEvents();
+
+        @PluginBuilderAttribute("RetryBackoff")
+        private long retryBackoff = DEFAULTS.retryBackoff().toMillis();
+
+        @PluginBuilderAttribute("MaxRetryBackoff")
+        private long maxRetryBackoff = DEFAULTS.maxRetryBackoff().toMillis();
+
+        @PluginBuilderAttribute("CloseTimeout")
+        private long closeTimeout = DEFAULTS.closeTimeout().toMillis();
+
+        /**
+         * Builds the appender.
+         *
+         * @return The new appender
+         * @throws IllegalArgumentException If a delivery option is out of its range, or the flush level unknown
+         */
         @Override
         public ElasticsearchAppender build() {
             ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
@@ -159,6 +204,17 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
                     .deliveryOptions(DeliveryOptions.builder()
                             .flushThreshold(getFlushThreshold())
                             .flushInterval(Duration.ofMillis(getFlushInterval()))
+                            .flushLevel(toLevel(getFlushLevel()))
+                            .maxConcurrentTransmissions(getMaxConcurrentTransmissions())
+                            .maxPendingDocuments(getMaxPendingDocuments())
+                            .maxRequestDocuments(getMaxRequestDocuments())
+                            .maxPendingBytes(getMaxPendingBytes())
+                            .maxRequestBytes(getMaxRequestBytes())
+                            .maxConsecutiveFailures(getMaxConsecutiveFailures())
+                            .maxQueuedEvents(getMaxQueuedEvents())
+                            .retryBackoff(Duration.ofMillis(getRetryBackoff()))
+                            .maxRetryBackoff(Duration.ofMillis(getMaxRetryBackoff()))
+                            .closeTimeout(Duration.ofMillis(getCloseTimeout()))
                             .build())
                     .build();
             return new ElasticsearchAppender(getName(), getFilter(), getLayout(), configuration);
@@ -172,6 +228,16 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
          */
         private static @Nullable DateTimeFormatter toFormatter(@Nullable String pattern) {
             return pattern == null || pattern.isEmpty() ? null : DateTimeFormatter.ofPattern(pattern);
+        }
+
+        /**
+         * Parses the flush level, failing the configuration rather than ignoring a level misspelled.
+         *
+         * @param name The name of the level, whatever its case, or an empty one for none
+         * @return The level, or {@code null} for none
+         */
+        private static @Nullable Level toLevel(@Nullable String name) {
+            return name == null || name.isBlank() ? null : Level.valueOf(name);
         }
 
     }

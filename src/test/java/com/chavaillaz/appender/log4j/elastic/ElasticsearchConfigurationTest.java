@@ -2,12 +2,16 @@ package com.chavaillaz.appender.log4j.elastic;
 
 import static java.time.OffsetDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
+import com.chavaillaz.appender.DeliveryOptions;
 import com.chavaillaz.appender.log4j.DefaultLogConverter;
 import com.chavaillaz.appender.log4j.LogConverter;
+import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.Test;
 
 class ElasticsearchConfigurationTest {
@@ -43,6 +47,39 @@ class ElasticsearchConfigurationTest {
 
         // Then
         assertThat(indexName).isEqualTo("idx");
+    }
+
+    @Test
+    void testDeliveryOptionsFromAttributes() {
+        // Given
+        ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
+                .setName("appender")
+                .setFlushLevel("warn")
+                .setMaxRequestBytes(10_485_760)
+                .setRetryBackoff(0)
+                .setCloseTimeout(5_000);
+
+        // When
+        DeliveryOptions options = builder.build().getLogConfiguration().getDeliveryOptions();
+
+        // Then: the attributes set are applied, the others keeping their defaults
+        assertThat(options.flushLevel()).isEqualTo(Level.WARN);
+        assertThat(options.maxRequestBytes()).isEqualTo(10_485_760);
+        assertThat(options.retryBackoff()).isZero();
+        assertThat(options.closeTimeout()).isEqualTo(Duration.ofSeconds(5));
+        assertThat(options.flushThreshold()).isEqualTo(100);
+        assertThat(options.maxPendingDocuments()).isEqualTo(DeliveryOptions.defaults().maxPendingDocuments());
+    }
+
+    @Test
+    void testUnknownFlushLevelFailsTheConfiguration() {
+        // Given
+        ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
+                .setName("appender")
+                .setFlushLevel("WARNING");
+
+        // When / Then: a misspelled level fails the configuration rather than disabling the flush silently
+        assertThatThrownBy(builder::build).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

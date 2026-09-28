@@ -44,23 +44,40 @@ You then have to configure log4j to include this appender (see configuration sec
 In the Log4j configuration file, add a new appender `ElasticsearchAppender` using package 
 `com.chavaillaz.appender.log4j.elastic` with the following properties:
 
-| Appender property | Environment / System variable | Default value               | Description                                                                                                                             |
-|-------------------|-------------------------------|-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| Application       | APP                           | `unknown`                   | The name of the application generating the logs.                                                                                        |
-| Host              | HOST                          | Machine host name           | The name of the host on which the application is running.                                                                               |
-| Environment       | ENV                           | `local`                     | The name of the environment in which the application is running.                                                                        |
-| Converter         | CONVERTER                     | `[...].DefaultLogConverter` | The path of the class used to convert logging events into key/value documents to be stored.                                             |
-| Index             | INDEX                         | `ha`                        | The name of the Elasticsearch index to which the documents are sent.                                                                    |
-| IndexSuffix       | INDEX_SUFFIX                  | -                           | The suffix added to the index name (using current date) in a format pattern suitable for `DateTimeFormatter`.                           |
-| Url               | ELASTIC_URL                   | -                           | The address of Elasticsearch in the format `scheme://host:port`.                                                                        |
-| UrlTrusted        | -                             | `false`                     | The flag to trust any certificate Elasticsearch presents over HTTPS, a self-signed one for instance, without verifying its host name.   |
-| User              | ELASTIC_USER                  | -                           | The username to use as credentials to access Elasticsearch.                                                                             |
-| Password          | ELASTIC_PASSWORD              | -                           | The password to use as credentials to access Elasticsearch.                                                                             |
-| ApiKey            | ELASTIC_API_KEY               | -                           | The API key (already encoded) to use as credentials to access Elasticsearch.                                                            |
-| FlushThreshold    | -                             | `100`                       | The threshold number of messages triggering the transmission of documents to the server.                                                |
-| FlushInterval     | -                             | `5000`                      | The time (ms) between two automatic flushes, which are triggering the transmission of logs, even if not reaching the defined threshold. |
+| Appender property          | Environment / System variable | Default value               | Description                                                                                                                               |
+|----------------------------|-------------------------------|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| Application                | APP                           | `unknown`                   | The name of the application generating the logs.                                                                                          |
+| Host                       | HOST                          | Machine host name           | The name of the host on which the application is running.                                                                                 |
+| Environment                | ENV                           | `local`                     | The name of the environment in which the application is running.                                                                          |
+| Converter                  | CONVERTER                     | `[...].DefaultLogConverter` | The path of the class used to convert logging events into key/value documents to be stored.                                               |
+| Index                      | INDEX                         | `ha`                        | The name of the Elasticsearch index to which the documents are sent.                                                                      |
+| IndexSuffix                | INDEX_SUFFIX                  | -                           | The suffix added to the index name (using current date) in a format pattern suitable for `DateTimeFormatter`.                             |
+| Url                        | ELASTIC_URL                   | -                           | The address of Elasticsearch in the format `scheme://host:port`.                                                                          |
+| UrlTrusted                 | -                             | `false`                     | The flag to trust any certificate Elasticsearch presents over HTTPS, a self-signed one for instance, without verifying its host name.     |
+| User                       | ELASTIC_USER                  | -                           | The username to use as credentials to access Elasticsearch.                                                                               |
+| Password                   | ELASTIC_PASSWORD              | -                           | The password to use as credentials to access Elasticsearch.                                                                               |
+| ApiKey                     | ELASTIC_API_KEY               | -                           | The API key (already encoded) to use as credentials to access Elasticsearch.                                                              |
+| FlushThreshold             | -                             | `100`                       | The threshold number of messages triggering the transmission of documents to the server.                                                  |
+| FlushInterval              | -                             | `5000`                      | The time (ms) between two automatic flushes, which are triggering the transmission of logs, even if not reaching the defined threshold.   |
+| FlushLevel                 | -                             | -                           | The minimum level (e.g. `WARN`) of an event flushing the documents right after it, rather than waiting for the threshold or the interval. |
+| MaxConcurrentTransmissions | -                             | `4`                         | The maximum number of bulk requests sent at the same time.                                                                                |
+| MaxPendingDocuments        | -                             | `10000`                     | The maximum number of documents waiting to be sent or retried, the oldest ones being discarded past it.                                   |
+| MaxRequestDocuments        | -                             | `2147483647`                | The maximum number of documents in a bulk request, a bigger batch being split into several requests.                                      |
+| MaxPendingBytes            | -                             | `9223372036854775807`       | The maximum estimated size (bytes) of the documents waiting to be sent or retried, the oldest ones being discarded past it.               |
+| MaxRequestBytes            | -                             | `9223372036854775807`       | The maximum estimated size (bytes) of a bulk request, a heavier batch being split into several requests.                                  |
+| MaxConsecutiveFailures     | -                             | `5`                         | The maximum number of failed attempts in a row for the same documents before they are discarded.                                          |
+| MaxQueuedEvents            | -                             | `10000`                     | The maximum number of events waiting to be converted, the oldest one being discarded past it.                                             |
+| RetryBackoff               | -                             | `1000`                      | The base delay (ms) before retrying a failed transmission, doubling with each consecutive failure, `0` retrying at once.                  |
+| MaxRetryBackoff            | -                             | `30000`                     | The maximum delay (ms) between two retries.                                                                                               |
+| CloseTimeout               | -                             | `30000`                     | The maximum time (ms) a stop waits for the documents still pending, while the `shutdownTimeout` of the Log4j configuration is `0`.        |
 
 Note that `Url` is the only mandatory configuration, except if you need to overwrite the default value of other ones.
+
+The properties from `FlushThreshold` on tune the delivery of the documents, as the
+[common library](https://github.com/chavaillaz/common-log4j-appender#configuration-reference) details them.
+`MaxRequestBytes` is worth setting under the `http.max_content_length` of Elasticsearch (100MB by
+default), `10485760` for instance: the documents piling up during an outage are otherwise sent back in a
+single bulk request, which Elasticsearch can refuse for its size.
 
 The certificate of Elasticsearch is verified unless `UrlTrusted` is set, where versions before 4.0 trusted any certificate.
 
