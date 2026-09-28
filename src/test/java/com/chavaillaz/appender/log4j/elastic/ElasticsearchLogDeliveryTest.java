@@ -1,0 +1,98 @@
+package com.chavaillaz.appender.log4j.elastic;
+
+import static com.chavaillaz.appender.log4j.elastic.ElasticsearchLogDelivery.toResult;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.Map;
+
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.elasticsearch.core.bulk.OperationType;
+import com.chavaillaz.appender.TransmissionResult;
+import org.junit.jupiter.api.Test;
+
+class ElasticsearchLogDeliveryTest {
+
+    private static final Map<String, Object> FIRST = Map.of("logmessage", "first");
+    private static final Map<String, Object> SECOND = Map.of("logmessage", "second");
+    private static final Map<String, Object> THIRD = Map.of("logmessage", "third");
+
+    private static BulkResponseItem indexed() {
+        return BulkResponseItem.of(item -> item
+                .operationType(OperationType.Index)
+                .index("ha")
+                .status(201));
+    }
+
+    private static BulkResponseItem rejected() {
+        return BulkResponseItem.of(item -> item
+                .operationType(OperationType.Index)
+                .index("ha")
+                .status(400)
+                .error(error -> error
+                        .type("document_parsing_exception")
+                        .reason("failed to parse field [datetime]")));
+    }
+
+    private static BulkResponse response(boolean errors, BulkResponseItem... items) {
+        return BulkResponse.of(response -> response
+                .errors(errors)
+                .took(1)
+                .items(List.of(items)));
+    }
+
+    @Test
+    void testSuccessWithoutErrors() {
+        // When
+        var result = toResult(List.of(FIRST, SECOND), response(false, indexed(), indexed()));
+
+        // Then
+        assertThat(result).isInstanceOf(TransmissionResult.Success.class);
+    }
+
+    @Test
+    void testPartialFailureRetriesOnlyTheRejectedDocuments() {
+        // When
+        var result = toResult(List.of(FIRST, SECOND, THIRD), response(true, indexed(), rejected(), indexed()));
+
+        // Then: only the rejected document is handed back, as the very instance sent, with the reason given
+        assertThat(result).isInstanceOf(TransmissionResult.PartialFailure.class);
+        var partial = (TransmissionResult.PartialFailure<Map<String, Object>>) result;
+        assertThat(partial.rejected()).singleElement().isSameAs(SECOND);
+        assertThat(partial.cause())
+                .isInstanceOf(ElasticsearchException.class)
+                .hasMessageContaining("document_parsing_exception");
+    }
+
+    @Test
+    void testFailureWhenEveryDocumentIsRejected() {
+        // When
+        var result = toResult(List.of(FIRST, SECOND), response(true, rejected(), rejected()));
+
+        // Then
+        assertThat(result).isInstanceOf(TransmissionResult.Failure.class);
+        assertThat(((TransmissionResult.Failure<Map<String, Object>>) result).cause())
+                .isInstanceOf(ElasticsearchException.class);
+    }
+
+    @Test
+    void testFailureWhenTheItemsDoNotMatchTheDocuments() {
+        // When: fewer items than documents, which leaves no telling which one was indexed
+        var result = toResult(List.of(FIRST, SECOND), response(true, rejected()));
+
+        // Then: all of them are retried rather than some lost
+        assertThat(result).isInstanceOf(TransmissionResult.Failure.class);
+    }
+
+    @Test
+    void testFailureWhenNoItemNamesTheError() {
+        // When
+        var result = toResult(List.of(FIRST, SECOND), response(true, indexed(), indexed()));
+
+        // Then
+        assertThat(result).isInstanceOf(TransmissionResult.Failure.class);
+    }
+
+}
