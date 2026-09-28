@@ -1,0 +1,37 @@
+version: 2
+updates:
+  # The updates of the build itself, which the versions plugin only prints in the log of a build
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: monthly
+    # Only the majors wait here, the grouped one being merged as soon as its build passes
+    open-pull-requests-limit: 10
+    groups:
+      # One pull request for everything compatible, a major update coming on its own, so that it lands as its
+      # own commit and does not hold back the rest when its build fails
+      dependencies:
+        patterns: [ "*" ]
+        update-types: [ minor, patch ]
+    ignore:
+      # Log4j 2, whose plugin API the appender is built on: its next major is another API, and changes what the
+      # appender asks of an application, which is a decision rather than an update
+      - dependency-name: "org.apache.logging.log4j:*"
+        update-types: [ "version-update:semver-major" ]
+      # The client and its REST client, versioned as Elasticsearch itself: their next major goes with the next one
+      # of Elasticsearch, and changes the clusters the appender supports, which is a decision rather than an update
+      - dependency-name: "co.elastic.clients:elasticsearch-java"
+        update-types: [ "version-update:semver-major" ]
+      - dependency-name: "org.elasticsearch.client:elasticsearch-rest-client"
+        update-types: [ "version-update:semver-major" ]
+
+  # The actions the workflows run on, whose major tag is what is pinned, so that only the next major shows up
+  - package-ecosystem: github-actions
+    # The root alone covers the workflows, not the composite action they set the build up through
+    directories: [ "/", "/.github/actions/*" ]
+    schedule:
+      interval: monthly
+    groups:
+      # A single group, every update being a major one, so that the workflows move together as they did by hand
+      actions:
+        patterns: [ "*" ]

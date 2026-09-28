@@ -1,0 +1,70 @@
+name: Dependency update
+on:
+  workflow_run:
+    # Every workflow a pull request builds it with, so that the last one to finish is the one finding it green.
+    # A workflow added beside them belongs in this list too, or an update waits for a merge that never comes.
+    workflows: [ Code quality, Dependency check ]
+    types: [ completed ]
+concurrency:
+  # The builds of one update finish at their own pace, and its merge is attempted once at a time
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+permissions:
+  # What the merge of the pull request and the deletion of its branch write
+  contents: write
+  pull-requests: write
+  # What the reading of the other builds of the same commit needs
+  actions: read
+jobs:
+  merge:
+    # Only the branches Dependabot pushes, and only the builds of their pull request: those builds are given a
+    # read-only token, where this workflow runs from master with the write access a merge needs
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge the update once every build of its commit passed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          COMMIT: ${{ github.event.workflow_run.head_sha }}
+          BUILD: ${{ github.event.workflow_run.id }}
+        run: |
+          # The pull request Dependabot still has open on the commit that was built, a push made since then
+          # having its own builds and its own run of this workflow
+          number=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&head=$GITHUB_REPOSITORY_OWNER:$BRANCH" |
+            jq -r --arg commit "$COMMIT" \
+              '.[] | select(.user.login == "dependabot[bot]" and .head.sha == $commit) | .number')
+          if [ -z "$number" ]; then
+            echo "No pull request of Dependabot stands on $COMMIT"
+            exit 0
+          fi
+
+          # Every build of that commit, this workflow left out of them, its own runs being made from master
+          builds=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?event=pull_request&head_sha=$COMMIT&per_page=100")
+          echo "$builds" | jq -r '.workflow_runs[] | "\(.name): \(.status) \(.conclusion // "")"'
+
+          # The build this run answers has to be among them, so that a listing answering nothing, of which an
+          # empty one cannot be told apart, is not read as a build that passed
+          if [ "$(echo "$builds" | jq --argjson build "$BUILD" \
+              '[.workflow_runs[] | select(.id == $build)] | length')" != "1" ]; then
+            echo "Leaving #$number alone, the build $BUILD that triggered this run not being listed for $COMMIT"
+            exit 0
+          fi
+
+          running=$(echo "$builds" | jq '[.workflow_runs[] | select(.status != "completed")] | length')
+          if [ "$running" != "0" ]; then
+            echo "Leaving #$number to the $running build(s) still running on it"
+            exit 0
+          fi
+
+          # A skipped build is one whose every job was, such as the dependency check of a fork, and says nothing
+          refused=$(echo "$builds" | jq -r '[.workflow_runs[]
+            | select(.conclusion != "success" and .conclusion != "skipped") | .name] | join(", ")')
+          if [ -n "$refused" ]; then
+            echo "Leaving #$number open, its build having failed: $refused"
+            exit 0
+          fi
+
+          gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --delete-branch
