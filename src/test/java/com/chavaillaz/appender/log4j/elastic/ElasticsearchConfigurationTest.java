@@ -17,10 +17,11 @@ class ElasticsearchConfigurationTest {
         // Given
         String index = "idx";
         String suffix = "yyyy.MM.dd";
-        ElasticsearchConfiguration configuration = new ElasticsearchConfiguration();
-        configuration.setIndex(index);
-        configuration.setIndexSuffix("-" + suffix);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
+                .index(index)
+                .indexSuffix(DateTimeFormatter.ofPattern("-" + suffix))
+                .build();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(suffix);
         OffsetDateTime date = now();
 
         // When
@@ -31,13 +32,29 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
-    void testWrongConverter() {
+    void testGenerateIndexNameWithoutSuffix() {
         // Given
-        ElasticsearchConfiguration configuration = new ElasticsearchConfiguration();
-        configuration.setConverter("package.does.not.exist.NotFoundConverter");
+        ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
+                .index("idx")
+                .build();
 
         // When
-        LogConverter converter = configuration.getConverter();
+        String indexName = configuration.generateIndexName(now());
+
+        // Then
+        assertThat(indexName).isEqualTo("idx");
+    }
+
+    @Test
+    void testWrongConverter() {
+        // Given
+        ElasticsearchAppender appender = ElasticsearchAppender.builder()
+                .setName("appender")
+                .setElasticConverter("package.does.not.exist.NotFoundConverter")
+                .build();
+
+        // When
+        LogConverter converter = appender.getLogConverter();
 
         // Then
         assertThat(converter.getClass()).isEqualTo(DefaultLogConverter.class);

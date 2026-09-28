@@ -1,74 +1,72 @@
 package com.chavaillaz.appender.log4j.elastic;
 
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-
-import java.lang.reflect.Constructor;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+import com.chavaillaz.appender.DeliveryOptions;
 import com.chavaillaz.appender.LogConfiguration;
 import com.chavaillaz.appender.log4j.DefaultLogConverter;
-import com.chavaillaz.appender.log4j.LogConverter;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Builder;
+import lombok.Value;
+import org.jspecify.annotations.Nullable;
 
 /**
- * Configuration for logs transmissions using Elasticsearch.
+ * Configuration for logs transmissions using Elasticsearch, immutable once built through {@link #builder()}.
  */
-@Getter
-@Setter
+@Value
+@Builder(toBuilder = true)
 public class ElasticsearchConfiguration implements LogConfiguration {
 
-    private String application;
-    private String host;
-    private String environment;
-    private LogConverter converter;
-    private String index;
-    private DateTimeFormatter indexSuffix;
-    private String url;
-    private String user;
-    private String password;
-    private String apiKey;
-    private long flushThreshold;
-    private Duration flushInterval;
+    String application;
+    String host;
+    String environment;
 
     /**
-     * Sets the logs converter by instantiating the given class name.
-     * Note that it must have an empty constructor.
-     *
-     * @param className The class name of the converter
+     * The class name of the converter turning a logging event into a document, created through its public
+     * constructor without arguments.
      */
-    public void setConverter(String className) {
-        try {
-            Class<?> clazz = Class.forName(className);
-            Constructor<?> constructor = clazz.getConstructor();
-            this.converter = (LogConverter) constructor.newInstance();
-        } catch (Exception e) {
-            this.converter = new DefaultLogConverter();
-        }
-        this.converter.configure(this);
-    }
+    @Builder.Default
+    String converter = DefaultLogConverter.class.getName();
 
     /**
-     * Sets the date suffix to use when generating the index to which send the documents.
-     * Note that it has to follow a pattern recognized by {@link DateTimeFormatter}.
-     *
-     * @param indexSuffix The index suffix
+     * The name of the index to which the documents are sent.
      */
-    public void setIndexSuffix(String indexSuffix) {
-        this.indexSuffix = DateTimeFormatter.ofPattern(Optional.ofNullable(indexSuffix).orElse(EMPTY));
-    }
+    @Builder.Default
+    String index = "ha";
+
+    /**
+     * The suffix of the name of the index, formatted with the current date, or {@code null} for none.
+     */
+    @Nullable DateTimeFormatter indexSuffix;
+
+    /**
+     * The address of Elasticsearch, in the format {@code scheme://host:port}.
+     */
+    String url;
+
+    @Nullable String user;
+    @Nullable String password;
+
+    /**
+     * The API key, already encoded, used rather than the user and password when set.
+     */
+    @Nullable String apiKey;
+
+    /**
+     * How the logs are batched, retried and shipped.
+     */
+    @Builder.Default
+    DeliveryOptions deliveryOptions = DeliveryOptions.defaults();
 
     /**
      * Generates the index name using the suffix if present.
      *
      * @param dateTime The date and time of the event in the format {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME}
-     *                 or {@code null} to avoid using the index prefix if defined
+     *                 or {@code null} to avoid using the index suffix if defined
      * @return The computed index name
      */
-    public String generateIndexName(String dateTime) {
+    public String generateIndexName(@Nullable String dateTime) {
         return generateIndexName(Optional.ofNullable(dateTime)
                 .map(OffsetDateTime::parse)
                 .orElse(null));
@@ -77,14 +75,14 @@ public class ElasticsearchConfiguration implements LogConfiguration {
     /**
      * Generates the index name using the suffix if present.
      *
-     * @param dateTime The date and time of the event or {@code null} to avoid using the index prefix if defined
+     * @param dateTime The date and time of the event or {@code null} to avoid using the index suffix if defined
      * @return The computed index name
      */
-    public String generateIndexName(OffsetDateTime dateTime) {
-        if (dateTime != null && getIndexSuffix() != null) {
-            return getIndex() + dateTime.format(getIndexSuffix());
+    public String generateIndexName(@Nullable OffsetDateTime dateTime) {
+        if (dateTime != null && indexSuffix != null) {
+            return index + dateTime.format(indexSuffix);
         } else {
-            return getIndex();
+            return index;
         }
     }
 

@@ -2,20 +2,23 @@ package com.chavaillaz.appender.log4j.elastic;
 
 import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createClient;
 import static java.time.OffsetDateTime.now;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
+import com.chavaillaz.appender.TransmissionResult;
 import com.chavaillaz.appender.log4j.AbstractBatchLogDelivery;
-import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of logs transmission for Elasticsearch.
  */
-@Log4j2
 public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<ElasticsearchConfiguration> {
 
     private final ElasticsearchClient client;
@@ -33,7 +36,7 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
      * Creates a new logs delivery handler for Elasticsearch.
      *
      * @param configuration The configuration to use
-     * @param client        The Elasticsearch client to use
+     * @param client        The Elasticsearch client to use, closed along with this delivery
      */
     public ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, ElasticsearchClient client) {
         super(configuration);
@@ -41,33 +44,29 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
     }
 
     @Override
-    protected boolean sendBulk(List<Map<String, Object>> documents) {
+    protected CompletableFuture<TransmissionResult<Map<String, Object>>> sendBulk(List<Map<String, Object>> documents) {
         try {
+            String index = getConfiguration().generateIndexName(now());
             BulkRequest.Builder builder = new BulkRequest.Builder();
             for (Map<String, Object> document : documents) {
                 builder.operations(operation -> operation
-                        .index(index -> index
-                                .index(getConfiguration().generateIndexName(now()))
+                        .index(action -> action
+                                .index(index)
                                 .document(document)));
             }
 
             BulkResponse response = client.bulk(builder.build());
-            if (!response.errors()) {
-                log.debug("Bulk of {} elements sent successfully in {}ms", documents.size(), response.took());
-                return true;
-            }
+            return completedFuture(response.errors() ? TransmissionResult.failure(null) : TransmissionResult.success());
         } catch (Exception e) {
-            log.warn("Error when sending bulk", e);
+            // Logged with its cause and retried by the library
+            return completedFuture(TransmissionResult.failure(e));
         }
-        return false;
     }
 
     @Override
-    public void close() throws Exception {
-        super.close();
-        if (client != null) {
-            client.close();
-        }
+    public void close(@Nullable Duration timeout) throws Exception {
+        super.close(timeout);
+        client.close();
     }
 
 }

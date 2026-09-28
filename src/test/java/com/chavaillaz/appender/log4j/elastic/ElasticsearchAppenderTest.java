@@ -3,7 +3,6 @@ package com.chavaillaz.appender.log4j.elastic;
 import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createClient;
 import static java.net.InetAddress.getLocalHost;
 import static java.time.Duration.ofSeconds;
-import static org.apache.commons.lang3.ThreadUtils.sleep;
 import static org.apache.logging.log4j.Level.INFO;
 import static org.apache.logging.log4j.LogManager.getRootLogger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -95,7 +94,7 @@ class ElasticsearchAppenderTest {
                     .setLevel(INFO)
                     .build();
             appender.append(event);
-            sleep(ofSeconds(5));
+            Thread.sleep(ofSeconds(5));
             appender.stop();
 
             // Then

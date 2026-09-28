@@ -1,6 +1,5 @@
 package com.chavaillaz.appender.log4j.elastic;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.auth.AuthScope.ANY;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -33,8 +32,9 @@ public class ElasticsearchUtils {
      * @return The Elasticsearch client with the given configuration
      */
     public static ElasticsearchClient createClient(ElasticsearchConfiguration configuration) {
-        if (isNotBlank(configuration.getApiKey())) {
-            return createClient(configuration.getUrl(), createPermissiveContext(), configuration.getApiKey());
+        String apiKey = configuration.getApiKey();
+        if (apiKey != null && !apiKey.isBlank()) {
+            return createClient(configuration.getUrl(), createPermissiveContext(), apiKey);
         } else {
             return createClient(configuration.getUrl(), createPermissiveContext(), configuration.getUser(), configuration.getPassword());
         }

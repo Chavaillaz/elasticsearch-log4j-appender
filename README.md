@@ -89,12 +89,13 @@ Note that `Url` is the only mandatory configuration, except if you need to overw
             <AppenderRef ref="Console"/>
             <AppenderRef ref="ElasticSearch"/>
         </Root>
-        <Logger name="com.chavaillaz.appender" additivity="false">
-            <AppenderRef ref="Console"/>
-        </Logger>
     </Loggers>
 </Configuration>
 ```
+
+The appender reports its own failures, a transmission that failed or documents it had to discard, on the
+status logger of Log4j2 rather than through a logger of its own, which would feed them back into the
+appender. The `status` attribute of the `Configuration` element shows them from the level it names.
 
 ## Contributing
 

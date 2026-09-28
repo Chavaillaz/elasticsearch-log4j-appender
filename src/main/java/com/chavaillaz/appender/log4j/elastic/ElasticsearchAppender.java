@@ -7,8 +7,9 @@ import static org.apache.logging.log4j.core.Core.CATEGORY_NAME;
 import static org.apache.logging.log4j.core.layout.PatternLayout.createDefaultLayout;
 
 import java.time.Duration;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
 
+import com.chavaillaz.appender.DeliveryOptions;
 import com.chavaillaz.appender.LogDelivery;
 import com.chavaillaz.appender.log4j.AbstractLogDeliveryAppender;
 import com.chavaillaz.appender.log4j.DefaultLogConverter;
@@ -16,14 +17,17 @@ import com.chavaillaz.appender.log4j.LogConverter;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
+import org.apache.logging.log4j.status.StatusLogger;
+import org.apache.logging.log4j.util.LoaderUtil;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Appender implementation using Elasticsearch for transmissions of logs from Log4j.
@@ -31,13 +35,47 @@ import org.apache.logging.log4j.core.config.plugins.validation.constraints.Requi
 @Plugin(name = "ElasticsearchAppender", category = CATEGORY_NAME, elementType = ELEMENT_TYPE)
 public class ElasticsearchAppender extends AbstractLogDeliveryAppender<ElasticsearchConfiguration> {
 
-    protected ElasticsearchAppender(String name, Filter filter, Layout<?> layout, ElasticsearchConfiguration configuration) {
+    /**
+     * The status logger of Log4j2 rather than an application logger, which would feed these diagnostics back
+     * into this appender.
+     */
+    private static final Logger log = StatusLogger.getLogger();
+
+    /**
+     * The converter the configuration names, or {@code null} for the default one of the appender.
+     */
+    private final @Nullable LogConverter converter;
+
+    protected ElasticsearchAppender(String name, @Nullable Filter filter, @Nullable Layout<?> layout, ElasticsearchConfiguration configuration) {
         super(name, filter, layout, configuration);
+        this.converter = createConverter(configuration);
     }
 
     @PluginBuilderFactory
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Creates the converter the configuration names, configured with it.
+     *
+     * @param configuration The configuration naming the converter
+     * @return The converter, or {@code null} for the default one, which is also used, and reported, when the
+     *         converter named cannot be created
+     */
+    private static @Nullable LogConverter createConverter(ElasticsearchConfiguration configuration) {
+        String className = configuration.getConverter();
+        if (className == null || className.isBlank() || DefaultLogConverter.class.getName().equals(className)) {
+            return null;
+        }
+        try {
+            LogConverter created = LoaderUtil.newCheckedInstanceOf(className, LogConverter.class);
+            created.configure(configuration);
+            return created;
+        } catch (Exception | LinkageError e) {
+            log.error("Unable to create the converter {}, converting with the default one instead", className, e);
+            return null;
+        }
     }
 
     @Override
@@ -46,11 +84,8 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
     }
 
     @Override
-    public Runnable createLogDeliveryTask(LogEvent loggingEvent) {
-        LogConverter converter = getLogConfiguration().getConverter();
-        LogEvent immutableEvent = loggingEvent.toImmutable();
-        return () -> Optional.ofNullable(getLogDeliveryHandler())
-                .ifPresent(handler -> handler.send(converter.convert(immutableEvent)));
+    protected LogConverter getLogConverter() {
+        return converter != null ? converter : super.getLogConverter();
     }
 
     @Getter
@@ -106,20 +141,33 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
 
         @Override
         public ElasticsearchAppender build() {
-            ElasticsearchConfiguration configuration = new ElasticsearchConfiguration();
-            configuration.setApplication(getApplicationName());
-            configuration.setHost(getHostName());
-            configuration.setEnvironment(getEnvironmentName());
-            configuration.setConverter(getElasticConverter());
-            configuration.setIndex(getElasticIndex());
-            configuration.setIndexSuffix(getElasticIndexSuffix());
-            configuration.setUrl(getElasticUrl());
-            configuration.setUser(getElasticUser());
-            configuration.setPassword(getElasticPassword());
-            configuration.setApiKey(getElasticApiKey());
-            configuration.setFlushThreshold(getFlushThreshold());
-            configuration.setFlushInterval(Duration.ofMillis(getFlushInterval()));
+            ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
+                    .application(getApplicationName())
+                    .host(getHostName())
+                    .environment(getEnvironmentName())
+                    .converter(getElasticConverter())
+                    .index(getElasticIndex())
+                    .indexSuffix(toFormatter(getElasticIndexSuffix()))
+                    .url(getElasticUrl())
+                    .user(getElasticUser())
+                    .password(getElasticPassword())
+                    .apiKey(getElasticApiKey())
+                    .deliveryOptions(DeliveryOptions.builder()
+                            .flushThreshold(getFlushThreshold())
+                            .flushInterval(Duration.ofMillis(getFlushInterval()))
+                            .build())
+                    .build();
             return new ElasticsearchAppender(getName(), getFilter(), getLayout(), configuration);
+        }
+
+        /**
+         * Parses the pattern of the index suffix.
+         *
+         * @param pattern The pattern, following {@link DateTimeFormatter}, or an empty one for no suffix
+         * @return The formatter, or {@code null} for no suffix
+         */
+        private static @Nullable DateTimeFormatter toFormatter(@Nullable String pattern) {
+            return pattern == null || pattern.isEmpty() ? null : DateTimeFormatter.ofPattern(pattern);
         }
 
     }
