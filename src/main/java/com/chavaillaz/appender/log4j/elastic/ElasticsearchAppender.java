@@ -1,7 +1,7 @@
 package com.chavaillaz.appender.log4j.elastic;
 
-import static com.chavaillaz.appender.CommonUtils.getInitialHostname;
-import static com.chavaillaz.appender.CommonUtils.getProperty;
+import static com.chavaillaz.appender.log4j.CommonUtils.getInitialHostname;
+import static com.chavaillaz.appender.log4j.CommonUtils.getProperty;
 import static org.apache.logging.log4j.core.Appender.ELEMENT_TYPE;
 import static org.apache.logging.log4j.core.Core.CATEGORY_NAME;
 
