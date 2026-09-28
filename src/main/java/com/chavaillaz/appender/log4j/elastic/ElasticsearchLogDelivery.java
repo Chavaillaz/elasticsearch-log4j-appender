@@ -6,6 +6,9 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -84,9 +87,9 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
     @Override
     protected CompletableFuture<TransmissionResult<Map<String, Object>>> sendBulk(List<Map<String, Object>> documents) {
         try {
-            String index = getConfiguration().generateIndexName(now());
             BulkRequest.Builder builder = new BulkRequest.Builder();
             for (Map<String, Object> document : documents) {
+                String index = indexOf(document);
                 builder.operations(operation -> operation
                         .index(action -> action
                                 .index(index)
@@ -99,6 +102,31 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
             // Logged with its cause and retried by the library
             return completedFuture(TransmissionResult.failure(e));
         }
+    }
+
+    /**
+     * The index a document goes to, suffixed with the date of its event in the default time zone of the system,
+     * rather than the date it is sent at: a document logged just before midnight, or retried after it, belongs
+     * with the others of its day. A document without a {@code datetime} field in the ISO-8601 format, which a
+     * converter of its own may leave out, is dated when sent.
+     *
+     * @param document The document to send
+     * @return The name of its index
+     */
+    String indexOf(Map<String, Object> document) {
+        ElasticsearchConfiguration configuration = getConfiguration();
+        if (configuration.getIndexSuffix() == null) {
+            return configuration.getIndex();
+        }
+        OffsetDateTime date = null;
+        if (document.get("datetime") instanceof String datetime) {
+            try {
+                date = OffsetDateTime.parse(datetime).atZoneSameInstant(ZoneId.systemDefault()).toOffsetDateTime();
+            } catch (DateTimeParseException e) {
+                // Written by a converter of its own in another format
+            }
+        }
+        return configuration.generateIndexName(date != null ? date : now());
     }
 
     /**

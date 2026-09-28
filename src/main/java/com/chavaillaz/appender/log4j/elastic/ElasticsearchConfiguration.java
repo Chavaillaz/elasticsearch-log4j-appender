@@ -37,7 +37,7 @@ public class ElasticsearchConfiguration implements LogConfiguration {
     String index = "ha";
 
     /**
-     * The suffix of the name of the index, formatted with the current date, or {@code null} for none.
+     * The suffix of the name of the index, formatted with the date of each event, or {@code null} for none.
      */
     @Nullable DateTimeFormatter indexSuffix;
 

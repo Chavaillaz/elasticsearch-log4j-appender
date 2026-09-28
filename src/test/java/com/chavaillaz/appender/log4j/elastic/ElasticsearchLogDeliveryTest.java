@@ -7,6 +7,8 @@ import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -167,6 +169,43 @@ class ElasticsearchLogDeliveryTest {
             assertThat(result).failsWithin(Duration.ofSeconds(10));
             delivery.close(Duration.ZERO);
         }
+    }
+
+    @Test
+    void testIndexIsNamedAfterTheDateOfTheEvent() throws Exception {
+        // Given: a daily index, and an event of a day long gone
+        ElasticsearchLogDelivery delivery = new ElasticsearchLogDelivery(dailyIndexConfiguration());
+
+        // When
+        String index = delivery.indexOf(Map.of("datetime", "2020-01-15T12:00:00.000Z"));
+
+        // Then: the day of the event, whenever it is sent
+        assertThat(index).isEqualTo("logs-2020.01.15");
+        delivery.close();
+    }
+
+    @Test
+    void testIndexOfADocumentWithoutItsDateIsTheOneOfTheDayItIsSent() throws Exception {
+        // Given
+        ElasticsearchLogDelivery delivery = new ElasticsearchLogDelivery(dailyIndexConfiguration());
+
+        // When: no date, or one in a format of its own
+        String withoutDate = delivery.indexOf(Map.of("logmessage", "first"));
+        String withOtherDate = delivery.indexOf(Map.of("datetime", "15/01/2020"));
+
+        // Then
+        String today = "logs" + OffsetDateTime.now().format(DateTimeFormatter.ofPattern("-yyyy.MM.dd"));
+        assertThat(withoutDate).isEqualTo(today);
+        assertThat(withOtherDate).isEqualTo(today);
+        delivery.close();
+    }
+
+    private static ElasticsearchConfiguration dailyIndexConfiguration() {
+        return ElasticsearchConfiguration.builder()
+                .url("http://localhost:1")
+                .index("logs")
+                .indexSuffix(DateTimeFormatter.ofPattern("-yyyy.MM.dd"))
+                .build();
     }
 
 }
