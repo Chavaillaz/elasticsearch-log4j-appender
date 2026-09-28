@@ -94,7 +94,7 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
         /**
          * The delivery options an attribute left unset keeps the value of.
          */
-        private static final DeliveryOptions DEFAULTS = DeliveryOptions.defaults();
+        private static final DeliveryOptions DEFAULTS = ElasticsearchConfiguration.DEFAULT_DELIVERY_OPTIONS;
 
         @PluginBuilderAttribute
         @Required(message = "No appender name provided")
@@ -144,10 +144,10 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
         private String deadLetterFile = getProperty("DEAD_LETTER_FILE", null);
 
         @PluginBuilderAttribute("FlushThreshold")
-        private long flushThreshold = 100;
+        private long flushThreshold = DEFAULTS.flushThreshold();
 
         @PluginBuilderAttribute("FlushInterval")
-        private long flushInterval = 5_000;
+        private long flushInterval = DEFAULTS.flushInterval().toMillis();
 
         @PluginBuilderAttribute("FlushLevel")
         private String flushLevel;

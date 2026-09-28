@@ -19,6 +19,16 @@ import org.jspecify.annotations.Nullable;
 @Builder(toBuilder = true)
 public class ElasticsearchConfiguration implements LogConfiguration {
 
+    /**
+     * The delivery options of the appender, unless configured otherwise: those of the common library, but for
+     * documents sent 100 at a time, and bulk requests split past 10 MiB, well under the 100 MB of
+     * {@code http.max_content_length} over which Elasticsearch refuses a request by default.
+     */
+    public static final DeliveryOptions DEFAULT_DELIVERY_OPTIONS = DeliveryOptions.defaults().with()
+            .flushThreshold(100)
+            .maxRequestBytes(10L * 1024 * 1024)
+            .build();
+
     String application;
     String host;
     String environment;
@@ -70,7 +80,7 @@ public class ElasticsearchConfiguration implements LogConfiguration {
      * How the logs are batched, retried and shipped.
      */
     @Builder.Default
-    DeliveryOptions deliveryOptions = DeliveryOptions.defaults();
+    DeliveryOptions deliveryOptions = DEFAULT_DELIVERY_OPTIONS;
 
     /**
      * Generates the index name using the suffix if present.
