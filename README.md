@@ -3,8 +3,8 @@
 [v1]: https://github.com/Chavaillaz/elasticsearch-log4j-appender/wiki/Appender-1.x-‐-Log4j-1.x
 [v2]: https://github.com/Chavaillaz/elasticsearch-log4j-appender/wiki/Appender-2.x-‐-Log4j-2.x
 
-![Quality Gate](https://github.com/chavaillaz/elasticsearch-log4j-appender/actions/workflows/sonarcloud.yml/badge.svg)
-![Dependency Check](https://github.com/chavaillaz/elasticsearch-log4j-appender/actions/workflows/snyk.yml/badge.svg)
+![Quality Gate](https://github.com/chavaillaz/elasticsearch-log4j-appender/actions/workflows/code-quality.yml/badge.svg)
+![Dependency Check](https://github.com/chavaillaz/elasticsearch-log4j-appender/actions/workflows/dependency-check.yml/badge.svg)
 [![Maven Central](https://maven-badges.sml.io/maven-central/com.chavaillaz/elasticsearch-log4j-appender/badge.svg?subject=Maven%20Central&color=blue)](https://maven-badges.sml.io/maven-central/com.chavaillaz/elasticsearch-log4j-appender)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
