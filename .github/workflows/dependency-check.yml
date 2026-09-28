@@ -1,29 +1,50 @@
 name: Dependency check
-on: push
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A superseded run is dropped everywhere but on master, whose every push keeps its own status and badge
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+permissions:
+  contents: read
+  # What the upload of the report to the code scanning of the repository writes
+  security-events: write
 jobs:
   security:
+    # A pull request opened from a fork is given neither the token the scan authenticates with nor the write access
+    # the upload needs, so that it is skipped rather than reported as a check that found nothing
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    # Read here rather than in the steps needing it, a secret not being readable from the condition skipping them
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run Snyk to monitor for vulnerabilities
-        uses: snyk/actions/maven@master
+        # The snapshot Snyk watches is the state of the project, which a pull request is not yet
+        if: github.event_name == 'push' && env.SNYK_TOKEN != ''
+        uses: snyk/actions/maven@v1
         continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: monitor
 
       - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/maven@master
+        # A Dependabot build reads the Dependabot secrets, where the token is only found once it is copied there
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/maven@v1
         continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --sarif-file-output=snyk.sarif --include-provided-dependencies=false
 
       - name: Upload result to GitHub Code Scanning
+        # The scan above is allowed to fail, in which case it wrote no report for this step to upload
+        if: hashFiles('snyk.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk.sarif

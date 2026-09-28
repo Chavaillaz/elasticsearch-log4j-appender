@@ -5,31 +5,50 @@ on:
       - master
   pull_request:
     types: [ opened, synchronize, reopened ]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A superseded run is dropped everywhere but on master, whose every push keeps its own status and badge
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 jobs:
   sonarqube:
+    name: Java ${{ matrix.java }}
     runs-on: ubuntu-latest
+    strategy:
+      # Each version reports its own result, rather than the first to fail cancelling the other
+      fail-fast: false
+      matrix:
+        # The version the appender is compiled for, and the latest long-term support one
+        java: [ '21', '25' ]
+    # Read here rather than in the steps needing it, a secret not being readable from the condition skipping them
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          # The whole history, the analysis dating each line by the commit that wrote it to tell new code apart
+          fetch-depth: 0
 
       - name: Set up
-        uses: actions/setup-java@v4
+        uses: ./.github/actions/setup
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
 
       - name: Build
         run: mvn -B -Pcoverage verify
 
       - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@master
+        # Analysed once, on the version the appender is compiled for. A Dependabot build reads the Dependabot
+        # secrets, where the token is only found once it is copied there, the build itself still saying whether
+        # the change compiles and passes the tests
+        if: env.SONAR_TOKEN != '' && matrix.java == '21'
+        uses: sonarsource/sonarqube-scan-action@v8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: SonarQube Quality Gate
-        uses: sonarsource/sonarqube-quality-gate-action@master
+        # The gate reads the report the scan above wrote, so it goes wherever the scan went
+        if: env.SONAR_TOKEN != '' && matrix.java == '21'
+        uses: sonarsource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

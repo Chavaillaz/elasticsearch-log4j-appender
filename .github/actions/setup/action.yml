@@ -1,0 +1,20 @@
+name: Set up
+description: >
+  Installs the JDK the build runs on, with the Maven repository cached, so that the version is declared once for
+  every workflow building the project. The publishing workflow sets its own up, needing the server and the signing
+  key of Maven Central rather than a cache. The repository has to be checked out beforehand, a local action being
+  read from the workspace itself.
+inputs:
+  java-version:
+    description: The version of the JDK to install
+    required: false
+    default: '21'
+runs:
+  using: composite
+  steps:
+    - name: Set up Java ${{ inputs.java-version }}
+      uses: actions/setup-java@v6
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: 'temurin'
+        cache: 'maven'

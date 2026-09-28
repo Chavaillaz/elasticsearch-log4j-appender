@@ -7,15 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     steps:
       - id: checkout-repository
         name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - id: setup-environment
         name: Set up for publishing to Maven Central Repository
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
