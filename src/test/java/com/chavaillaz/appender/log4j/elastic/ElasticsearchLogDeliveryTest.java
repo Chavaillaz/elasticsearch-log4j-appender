@@ -3,15 +3,21 @@ package com.chavaillaz.appender.log4j.elastic;
 import static com.chavaillaz.appender.log4j.elastic.ElasticsearchLogDelivery.toResult;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.bulk.OperationType;
+import com.chavaillaz.appender.DeliveryOptions;
 import com.chavaillaz.appender.TransmissionResult;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class ElasticsearchLogDeliveryTest {
 
@@ -84,6 +90,30 @@ class ElasticsearchLogDeliveryTest {
 
         // Then: all of them are retried rather than some lost
         assertThat(result).isInstanceOf(TransmissionResult.Failure.class);
+    }
+
+    @Test
+    void testDroppedDocumentsAreSavedToTheDeadLetterFile(@TempDir Path directory) throws Exception {
+        // Given: a cluster that cannot be reached, and a single attempt per document
+        ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
+                .url("http://localhost:1")
+                .deadLetterFile(directory.resolve("dead-letters.ndjson"))
+                .deliveryOptions(DeliveryOptions.builder()
+                        .maxConsecutiveFailures(1)
+                        .build())
+                .build();
+        ElasticsearchLogDelivery delivery = new ElasticsearchLogDelivery(configuration);
+
+        // When
+        delivery.send(Map.of("logmessage", "saved"));
+        delivery.close(Duration.ofSeconds(10));
+
+        // Then: the document given up on is saved in the file of the day
+        try (Stream<Path> files = Files.list(directory)) {
+            List<Path> saved = files.toList();
+            assertThat(saved).hasSize(1);
+            assertThat(Files.readString(saved.getFirst())).contains("\"logmessage\":\"saved\"");
+        }
     }
 
     @Test

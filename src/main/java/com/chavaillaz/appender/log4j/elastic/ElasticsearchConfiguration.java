@@ -1,5 +1,6 @@
 package com.chavaillaz.appender.log4j.elastic;
 
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -58,6 +59,12 @@ public class ElasticsearchConfiguration implements LogConfiguration {
      * The API key, already encoded, used rather than the user and password when set.
      */
     @Nullable String apiKey;
+
+    /**
+     * The file the documents dropped are saved to, rotated every day, or {@code null} to only report them
+     * on the status logger.
+     */
+    @Nullable Path deadLetterFile;
 
     /**
      * How the logs are batched, retried and shipped.

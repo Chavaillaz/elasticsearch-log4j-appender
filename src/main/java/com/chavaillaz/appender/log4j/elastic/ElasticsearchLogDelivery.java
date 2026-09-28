@@ -4,6 +4,7 @@ import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createCli
 import static java.time.OffsetDateTime.now;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,8 @@ import co.elastic.clients.elasticsearch._types.ErrorResponse;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import com.chavaillaz.appender.FileDeadLetterListener;
+import com.chavaillaz.appender.LogDeliveryListener;
 import com.chavaillaz.appender.TransmissionResult;
 import com.chavaillaz.appender.log4j.AbstractBatchLogDelivery;
 import org.jspecify.annotations.Nullable;
@@ -33,7 +36,8 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
      * @param configuration The configuration to use
      */
     public ElasticsearchLogDelivery(ElasticsearchConfiguration configuration) {
-        this(configuration, createClient(configuration));
+        // The listener first, so that a directory it cannot create does not leave a client running
+        this(configuration, deadLetterListener(configuration), createClient(configuration));
     }
 
     /**
@@ -43,8 +47,25 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
      * @param client        The Elasticsearch client to use, closed along with this delivery
      */
     public ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, ElasticsearchClient client) {
-        super(configuration);
+        this(configuration, deadLetterListener(configuration), client);
+    }
+
+    private ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, @Nullable LogDeliveryListener listener,
+                            ElasticsearchClient client) {
+        super(configuration, listener);
         this.client = client;
+    }
+
+    /**
+     * Creates the listener saving the documents dropped to the dead-letter file of the configuration.
+     *
+     * @param configuration The configuration to use
+     * @return The listener, or {@code null} without a dead-letter file
+     * @throws java.io.UncheckedIOException If the directory of the file does not exist and cannot be created
+     */
+    private static @Nullable LogDeliveryListener deadLetterListener(ElasticsearchConfiguration configuration) {
+        Path file = configuration.getDeadLetterFile();
+        return file != null ? new FileDeadLetterListener(file) : null;
     }
 
     @Override
