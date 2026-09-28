@@ -26,7 +26,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 import org.apache.logging.log4j.status.StatusLogger;
-import org.apache.logging.log4j.util.LoaderUtil;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -57,7 +56,8 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
     }
 
     /**
-     * Creates the converter the configuration names, configured with it.
+     * Creates the converter the configuration names, built with it (see
+     * {@link LogConverter#newInstance(String, com.chavaillaz.appender.LogConfiguration)}).
      *
      * @param configuration The configuration naming the converter
      * @return The converter, or {@code null} for the default one, which is also used, and reported, when the
@@ -69,9 +69,7 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
             return null;
         }
         try {
-            LogConverter created = LoaderUtil.newCheckedInstanceOf(className, LogConverter.class);
-            created.configure(configuration);
-            return created;
+            return LogConverter.newInstance(className, configuration);
         } catch (Exception | LinkageError e) {
             log.error("Unable to create the converter {}, converting with the default one instead", className, e);
             return null;

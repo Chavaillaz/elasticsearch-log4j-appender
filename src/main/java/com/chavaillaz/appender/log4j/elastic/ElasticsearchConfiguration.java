@@ -25,7 +25,7 @@ public class ElasticsearchConfiguration implements LogConfiguration {
 
     /**
      * The class name of the converter turning a logging event into a document, created through its public
-     * constructor without arguments.
+     * constructor taking this configuration.
      */
     @Builder.Default
     String converter = DefaultLogConverter.class.getName();

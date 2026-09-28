@@ -7,11 +7,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 import com.chavaillaz.appender.DeliveryOptions;
+import com.chavaillaz.appender.LogConfiguration;
 import com.chavaillaz.appender.log4j.DefaultLogConverter;
 import com.chavaillaz.appender.log4j.LogConverter;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.junit.jupiter.api.Test;
 
 class ElasticsearchConfigurationTest {
@@ -120,6 +124,38 @@ class ElasticsearchConfigurationTest {
 
         // Then
         assertThat(converter.getClass()).isEqualTo(DefaultLogConverter.class);
+    }
+
+    @Test
+    void testNamedConverterIsBuiltWithTheConfiguration() {
+        // Given
+        ElasticsearchAppender appender = ElasticsearchAppender.builder()
+                .setName("appender")
+                .setApplicationName("my-application")
+                .setElasticConverter(ApplicationConverter.class.getName())
+                .build();
+
+        // When
+        LogConverter converter = appender.getLogConverter();
+
+        // Then
+        assertThat(converter).isInstanceOf(ApplicationConverter.class);
+        assertThat(converter.convert(Log4jLogEvent.newBuilder().build())).containsEntry("application", "my-application");
+    }
+
+    public static class ApplicationConverter implements LogConverter {
+
+        private final LogConfiguration configuration;
+
+        public ApplicationConverter(LogConfiguration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        public Map<String, Object> convert(LogEvent event) {
+            return Map.of("application", configuration.getApplication());
+        }
+
     }
 
 }
