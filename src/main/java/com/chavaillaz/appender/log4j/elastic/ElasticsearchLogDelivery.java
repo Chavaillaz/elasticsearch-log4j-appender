@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorResponse;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
@@ -24,7 +24,8 @@ import com.chavaillaz.appender.log4j.AbstractBatchLogDelivery;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Implementation of logs transmission for Elasticsearch.
+ * Implementation of logs transmission for Elasticsearch, through its asynchronous client: a bulk request
+ * holds no thread while waiting for its answer, which completes the future the library handles.
  */
 public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<ElasticsearchConfiguration> {
 
@@ -34,7 +35,7 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
      */
     private static final int ACTION_OVERHEAD = 25;
 
-    private final ElasticsearchClient client;
+    private final ElasticsearchAsyncClient client;
 
     /**
      * The length of the name of the index the documents are sent to, taken once, a date suffix keeping it
@@ -56,13 +57,13 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
      * Creates a new logs delivery handler for Elasticsearch.
      *
      * @param configuration The configuration to use
-     * @param client        The Elasticsearch client to use, closed along with this delivery
+     * @param client        The asynchronous Elasticsearch client to use, closed along with this delivery
      */
-    public ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, ElasticsearchClient client) {
+    public ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, ElasticsearchAsyncClient client) {
         this(configuration, deadLetterListener(configuration), client);
     }
 
-    private ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, @Nullable LogDeliveryListener listener, ElasticsearchClient client) {
+    private ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, @Nullable LogDeliveryListener listener, ElasticsearchAsyncClient client) {
         super(configuration, listener);
         this.client = client;
         this.indexNameLength = configuration.generateIndexName(now()).length();
@@ -92,7 +93,8 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
                                 .document(document)));
             }
 
-            return completedFuture(toResult(documents, client.bulk(builder.build())));
+            // Completed by a thread of the client once answered, the library handling the result on its own
+            return client.bulk(builder.build()).thenApply(response -> toResult(documents, response));
         } catch (Exception e) {
             // Logged with its cause and retried by the library
             return completedFuture(TransmissionResult.failure(e));

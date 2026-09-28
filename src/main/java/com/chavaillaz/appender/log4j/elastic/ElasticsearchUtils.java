@@ -2,7 +2,7 @@ package com.chavaillaz.appender.log4j.elastic;
 
 import static org.apache.http.auth.AuthScope.ANY;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import javax.net.ssl.SSLContext;
@@ -27,14 +27,14 @@ import org.elasticsearch.client.RestClientBuilder;
 public class ElasticsearchUtils {
 
     /**
-     * Creates a new Elasticsearch client, verifying the certificate Elasticsearch presents unless the
-     * configuration trusts its URL, and authenticating with the API key, or the user when there is none,
-     * or not at all for a cluster without security.
+     * Creates a new asynchronous Elasticsearch client, verifying the certificate Elasticsearch presents unless
+     * the configuration trusts its URL, and authenticating with the API key, or the user when there is none, or
+     * not at all for a cluster without security.
      *
      * @param configuration The configuration to use
      * @return The Elasticsearch client with the given configuration
      */
-    public static ElasticsearchClient createClient(ElasticsearchConfiguration configuration) {
+    public static ElasticsearchAsyncClient createClient(ElasticsearchConfiguration configuration) {
         RestClientBuilder builder = RestClient.builder(HttpHost.create(configuration.getUrl()));
         String apiKey = configuration.getApiKey();
         boolean withApiKey = apiKey != null && !apiKey.isBlank();
@@ -58,7 +58,7 @@ public class ElasticsearchUtils {
     }
 
     /**
-     * Creates a new Elasticsearch client.
+     * Creates a new asynchronous Elasticsearch client.
      *
      * @param url        The URL of the Elasticsearch instance to reach
      * @param sslContext The secure socket protocol implementation, used without verifying the host name
@@ -66,7 +66,7 @@ public class ElasticsearchUtils {
      * @param password   The password corresponding to the given username
      * @return The Elasticsearch client with the given configuration
      */
-    public static ElasticsearchClient createClient(String url, SSLContext sslContext, String username, String password) {
+    public static ElasticsearchAsyncClient createClient(String url, SSLContext sslContext, String username, String password) {
         CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(ANY, new UsernamePasswordCredentials(username, password));
         return createClient(RestClient
@@ -80,14 +80,14 @@ public class ElasticsearchUtils {
     }
 
     /**
-     * Creates a new Elasticsearch client.
+     * Creates a new asynchronous Elasticsearch client.
      *
      * @param url        The URL of the Elasticsearch instance to reach
      * @param sslContext The secure socket protocol implementation, used without verifying the host name
      * @param apiKey     The encoded API key to authenticate
      * @return The Elasticsearch client with the given configuration
      */
-    public static ElasticsearchClient createClient(String url, SSLContext sslContext, String apiKey) {
+    public static ElasticsearchAsyncClient createClient(String url, SSLContext sslContext, String apiKey) {
         Header headerApiKey = new BasicHeader("Authorization", "ApiKey " + apiKey);
         return createClient(RestClient
                 .builder(HttpHost.create(url))
@@ -100,14 +100,14 @@ public class ElasticsearchUtils {
     }
 
     /**
-     * Creates a new Elasticsearch client using the given REST client
-     * and using a customized JSON Mapper with Java 8 Date/Time Module.
+     * Creates a new asynchronous Elasticsearch client sending its requests through the given REST client, and
+     * mapping the documents to JSON with Jackson.
      *
      * @param restClient The REST client to use
      * @return The Elasticsearch client with the given configuration
      */
-    public static ElasticsearchClient createClient(RestClient restClient) {
-        return new ElasticsearchClient(new RestClientTransport(restClient, new Jackson3JsonpMapper()));
+    public static ElasticsearchAsyncClient createClient(RestClient restClient) {
+        return new ElasticsearchAsyncClient(new RestClientTransport(restClient, new Jackson3JsonpMapper()));
     }
 
     /**

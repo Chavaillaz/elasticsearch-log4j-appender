@@ -81,8 +81,8 @@ class ElasticsearchAppenderTest {
             String logger = getRootLogger().getClass().getCanonicalName();
             String address = "https://" + container.getHttpHostAddress();
             SSLContext ssl = container.createSslContextFromCa();
-            ElasticsearchClient client = createClient(address, ssl, ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD);
-            ElasticsearchClient apiClient = createClient(address, ssl, createApiKey(client));
+            ElasticsearchClient client = new ElasticsearchClient(createClient(address, ssl, ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD)._transport());
+            ElasticsearchClient apiClient = new ElasticsearchClient(createClient(address, ssl, createApiKey(client))._transport());
             ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), address);
             ThreadContext.put("key", "value");
 

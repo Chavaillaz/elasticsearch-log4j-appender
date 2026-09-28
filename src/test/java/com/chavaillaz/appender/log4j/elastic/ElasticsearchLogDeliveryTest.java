@@ -3,6 +3,7 @@ package com.chavaillaz.appender.log4j.elastic;
 import static com.chavaillaz.appender.log4j.elastic.ElasticsearchLogDelivery.toResult;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -141,6 +142,31 @@ class ElasticsearchLogDeliveryTest {
 
         // Then
         assertThat(result).isInstanceOf(TransmissionResult.Failure.class);
+    }
+
+    @Test
+    void testSendingDoesNotWaitForTheAnswer() throws Exception {
+        // Given: a server accepting connections and never answering
+        try (ServerSocket server = new ServerSocket(0)) {
+            ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
+                    .url("http://localhost:" + server.getLocalPort())
+                    .build();
+            ElasticsearchLogDelivery delivery = new ElasticsearchLogDelivery(configuration);
+
+            // When
+            long start = System.nanoTime();
+            var result = delivery.sendBulk(List.of(FIRST));
+            Duration elapsed = Duration.ofNanos(System.nanoTime() - start);
+
+            // Then: the request is sent without any thread waiting for its answer
+            assertThat(elapsed).isLessThan(Duration.ofSeconds(5));
+            assertThat(result).isNotDone();
+
+            // Cleanup: the server gone first, the request failing rather than being left for the close to wait on
+            server.close();
+            assertThat(result).failsWithin(Duration.ofSeconds(10));
+            delivery.close(Duration.ZERO);
+        }
     }
 
 }

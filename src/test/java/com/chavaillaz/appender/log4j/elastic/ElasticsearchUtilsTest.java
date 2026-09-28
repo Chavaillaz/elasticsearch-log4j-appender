@@ -4,7 +4,7 @@ import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createCli
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import org.junit.jupiter.api.Test;
 
 class ElasticsearchUtilsTest {
@@ -17,7 +17,7 @@ class ElasticsearchUtilsTest {
                 .build();
 
         // When
-        try (ElasticsearchClient client = assertDoesNotThrow(() -> createClient(configuration))) {
+        try (ElasticsearchAsyncClient client = assertDoesNotThrow(() -> createClient(configuration))) {
 
             // Then
             assertThat(client).isNotNull();
