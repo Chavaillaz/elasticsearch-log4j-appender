@@ -28,7 +28,19 @@ import org.jspecify.annotations.Nullable;
  */
 public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<ElasticsearchConfiguration> {
 
+    /**
+     * Bytes the action preceding each document adds to a bulk request, the name of the index aside:
+     * {@code {"index":{"_index":""}}} and the line feeds ending both lines.
+     */
+    private static final int ACTION_OVERHEAD = 25;
+
     private final ElasticsearchClient client;
+
+    /**
+     * The length of the name of the index the documents are sent to, taken once, a date suffix keeping it
+     * the same from one day to the next.
+     */
+    private final int indexNameLength;
 
     /**
      * Creates a new logs delivery handler for Elasticsearch.
@@ -50,10 +62,10 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
         this(configuration, deadLetterListener(configuration), client);
     }
 
-    private ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, @Nullable LogDeliveryListener listener,
-                            ElasticsearchClient client) {
+    private ElasticsearchLogDelivery(ElasticsearchConfiguration configuration, @Nullable LogDeliveryListener listener, ElasticsearchClient client) {
         super(configuration, listener);
         this.client = client;
+        this.indexNameLength = configuration.generateIndexName(now()).length();
     }
 
     /**
@@ -129,6 +141,16 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
         return rejected.size() == documents.size()
                 ? TransmissionResult.failure(cause)
                 : TransmissionResult.partialFailure(rejected, cause);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Counts the action preceding the document in a bulk request as well.
+     */
+    @Override
+    protected long estimateDocumentSize(Map<String, Object> document) {
+        return super.estimateDocumentSize(document) + ACTION_OVERHEAD + indexNameLength;
     }
 
     @Override
