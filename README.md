@@ -101,11 +101,14 @@ The certificate of Elasticsearch is verified unless `UrlTrusted` is set, where v
             <Converter>com.chavaillaz.appender.log4j.DefaultLogConverter</Converter>
             <Index>ha</Index>
             <IndexSuffix>-yyyy.MM</IndexSuffix>
-            <Url>http://localhost:9300</Url>
+            <Url>https://localhost:9200</Url>
             <User>elastic</User>
             <Password>changeme</Password>
+            <DeadLetterFile>/var/log/myApplication/dead-letters.ndjson</DeadLetterFile>
             <FlushThreshold>100</FlushThreshold>
             <FlushInterval>5000</FlushInterval>
+            <FlushLevel>ERROR</FlushLevel>
+            <MaxRequestBytes>10485760</MaxRequestBytes>
         </ElasticsearchAppender>
     </Appenders>
     <Loggers>
