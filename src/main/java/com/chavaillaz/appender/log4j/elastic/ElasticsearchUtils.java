@@ -28,7 +28,8 @@ public class ElasticsearchUtils {
 
     /**
      * Creates a new Elasticsearch client, verifying the certificate Elasticsearch presents unless the
-     * configuration trusts its URL, and authenticating with the API key, or the user when there is none.
+     * configuration trusts its URL, and authenticating with the API key, or the user when there is none,
+     * or not at all for a cluster without security.
      *
      * @param configuration The configuration to use
      * @return The Elasticsearch client with the given configuration
@@ -41,7 +42,7 @@ public class ElasticsearchUtils {
             builder.setDefaultHeaders(new Header[]{new BasicHeader("Authorization", "ApiKey " + apiKey)});
         }
         builder.setHttpClientConfigCallback(httpClientBuilder -> {
-            if (!withApiKey) {
+            if (!withApiKey && configuration.getUser() != null) {
                 CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
                 credentialsProvider.setCredentials(ANY, new UsernamePasswordCredentials(configuration.getUser(), configuration.getPassword()));
                 httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
