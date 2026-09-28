@@ -72,6 +72,31 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    void testHostNameSetIsKept() {
+        // Given
+        ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
+                .setName("appender")
+                .setHostName("my-host");
+
+        // When
+        String host = builder.build().getLogConfiguration().getHost();
+
+        // Then
+        assertThat(host).isEqualTo("my-host");
+    }
+
+    @Test
+    void testHostNameIsOnlyResolvedWhenBuilding() {
+        // Given: a builder, which Log4j2 creates before setting the attributes of the configuration
+        ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
+                .setName("appender");
+
+        // When / Then: nothing looked up yet, however long the lookup takes, the host possibly being given later
+        assertThat(builder.getHostName()).isNull();
+        assertThat(builder.build().getLogConfiguration().getHost()).isNotBlank();
+    }
+
+    @Test
     void testUnknownFlushLevelFailsTheConfiguration() {
         // Given
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
