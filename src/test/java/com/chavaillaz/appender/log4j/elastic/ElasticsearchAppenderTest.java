@@ -1,4 +1,4 @@
-package com.chavaillaz.appender.log4j;
+package com.chavaillaz.appender.log4j.elastic;
 
 import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createClient;
 import static java.net.InetAddress.getLocalHost;
@@ -17,7 +17,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.security.CreateApiKeyRequest;
-import com.chavaillaz.appender.log4j.elastic.ElasticsearchAppender;
 import javax.net.ssl.SSLContext;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;

@@ -1,4 +1,4 @@
-package com.chavaillaz.appender.log4j;
+package com.chavaillaz.appender.log4j.elastic;
 
 import static java.time.OffsetDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -6,7 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
-import com.chavaillaz.appender.log4j.elastic.ElasticsearchConfiguration;
+import com.chavaillaz.appender.log4j.DefaultLogConverter;
+import com.chavaillaz.appender.log4j.LogConverter;
 import org.junit.jupiter.api.Test;
 
 class ElasticsearchConfigurationTest {

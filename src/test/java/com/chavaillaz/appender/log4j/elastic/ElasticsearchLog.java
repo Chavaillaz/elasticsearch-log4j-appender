@@ -1,4 +1,4 @@
-package com.chavaillaz.appender.log4j;
+package com.chavaillaz.appender.log4j.elastic;
 
 import java.time.LocalDateTime;
 
