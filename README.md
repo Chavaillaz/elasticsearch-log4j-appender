@@ -37,6 +37,9 @@ The dependency is available in maven central (see badge and table above for the 
 </dependency>
 ```
 
+On the module path, the appender is the automatic module `com.chavaillaz.appender.log4j.elastic`, its
+Elasticsearch client declaring no module name that a descriptor of its own could require.
+
 You then have to configure log4j to include this appender (see configuration section below).
 
 ## Configuration

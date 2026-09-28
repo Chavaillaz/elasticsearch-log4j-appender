@@ -187,6 +187,21 @@
             </plugin>
 
             <plugin>
+                <!-- Names the module of the appender on the module path: the Elasticsearch client declaring no
+                     module name, a descriptor could only require it by the name of its jar -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Automatic-Module-Name>com.chavaillaz.appender.log4j.elastic</Automatic-Module-Name>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.6</version>
