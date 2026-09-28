@@ -124,6 +124,9 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
         @PluginBuilderAttribute("Url")
         private String elasticUrl = getProperty("ELASTIC_URL", null);
 
+        @PluginBuilderAttribute("UrlTrusted")
+        private boolean elasticUrlTrusted = false;
+
         @PluginBuilderAttribute("User")
         private String elasticUser = getProperty("ELASTIC_USER", null);
 
@@ -149,6 +152,7 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
                     .index(getElasticIndex())
                     .indexSuffix(toFormatter(getElasticIndexSuffix()))
                     .url(getElasticUrl())
+                    .urlTrusted(isElasticUrlTrusted())
                     .user(getElasticUser())
                     .password(getElasticPassword())
                     .apiKey(getElasticApiKey())

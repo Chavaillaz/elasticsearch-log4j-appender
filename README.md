@@ -53,6 +53,7 @@ In the Log4j configuration file, add a new appender `ElasticsearchAppender` usin
 | Index             | INDEX                         | `ha`                        | The name of the Elasticsearch index to which the documents are sent.                                                                    |
 | IndexSuffix       | INDEX_SUFFIX                  | -                           | The suffix added to the index name (using current date) in a format pattern suitable for `DateTimeFormatter`.                           |
 | Url               | ELASTIC_URL                   | -                           | The address of Elasticsearch in the format `scheme://host:port`.                                                                        |
+| UrlTrusted        | -                             | `false`                     | The flag to trust any certificate Elasticsearch presents over HTTPS, a self-signed one for instance, without verifying its host name.   |
 | User              | ELASTIC_USER                  | -                           | The username to use as credentials to access Elasticsearch.                                                                             |
 | Password          | ELASTIC_PASSWORD              | -                           | The password to use as credentials to access Elasticsearch.                                                                             |
 | ApiKey            | ELASTIC_API_KEY               | -                           | The API key (already encoded) to use as credentials to access Elasticsearch.                                                            |
@@ -60,6 +61,8 @@ In the Log4j configuration file, add a new appender `ElasticsearchAppender` usin
 | FlushInterval     | -                             | `5000`                      | The time (ms) between two automatic flushes, which are triggering the transmission of logs, even if not reaching the defined threshold. |
 
 Note that `Url` is the only mandatory configuration, except if you need to overwrite the default value of other ones.
+
+The certificate of Elasticsearch is verified unless `UrlTrusted` is set, where versions before 4.0 trusted any certificate.
 
 ## XML file example
 

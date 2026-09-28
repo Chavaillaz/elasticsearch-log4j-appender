@@ -48,6 +48,7 @@ class ElasticsearchAppenderTest {
         builder.setApplicationName(application);
         builder.setHostName(hostname);
         builder.setElasticUrl(elastic);
+        builder.setElasticUrlTrusted(true);
         builder.setElasticUser(ELASTICSEARCH_USERNAME);
         builder.setElasticPassword(ELASTICSEARCH_PASSWORD);
         builder.setFlushInterval(500);

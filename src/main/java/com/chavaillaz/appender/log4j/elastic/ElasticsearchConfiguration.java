@@ -45,6 +45,12 @@ public class ElasticsearchConfiguration implements LogConfiguration {
      */
     String url;
 
+    /**
+     * Whether to trust any certificate Elasticsearch presents over HTTPS, a self-signed one for instance,
+     * without verifying its host name either.
+     */
+    boolean urlTrusted;
+
     @Nullable String user;
     @Nullable String password;
 

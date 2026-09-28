@@ -18,6 +18,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 
 /**
  * Elasticsearch specific utility methods.
@@ -26,25 +27,40 @@ import org.elasticsearch.client.RestClient;
 public class ElasticsearchUtils {
 
     /**
-     * Creates a new Elasticsearch client.
+     * Creates a new Elasticsearch client, verifying the certificate Elasticsearch presents unless the
+     * configuration trusts its URL, and authenticating with the API key, or the user when there is none.
      *
      * @param configuration The configuration to use
      * @return The Elasticsearch client with the given configuration
      */
     public static ElasticsearchClient createClient(ElasticsearchConfiguration configuration) {
+        RestClientBuilder builder = RestClient.builder(HttpHost.create(configuration.getUrl()));
         String apiKey = configuration.getApiKey();
-        if (apiKey != null && !apiKey.isBlank()) {
-            return createClient(configuration.getUrl(), createPermissiveContext(), apiKey);
-        } else {
-            return createClient(configuration.getUrl(), createPermissiveContext(), configuration.getUser(), configuration.getPassword());
+        boolean withApiKey = apiKey != null && !apiKey.isBlank();
+        if (withApiKey) {
+            builder.setDefaultHeaders(new Header[]{new BasicHeader("Authorization", "ApiKey " + apiKey)});
         }
+        builder.setHttpClientConfigCallback(httpClientBuilder -> {
+            if (!withApiKey) {
+                CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                credentialsProvider.setCredentials(ANY, new UsernamePasswordCredentials(configuration.getUser(), configuration.getPassword()));
+                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+            }
+            if (configuration.isUrlTrusted()) {
+                httpClientBuilder
+                        .setSSLContext(createPermissiveContext())
+                        .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+            }
+            return httpClientBuilder;
+        });
+        return createClient(builder.build());
     }
 
     /**
      * Creates a new Elasticsearch client.
      *
      * @param url        The URL of the Elasticsearch instance to reach
-     * @param sslContext The secure socket protocol implementation
+     * @param sslContext The secure socket protocol implementation, used without verifying the host name
      * @param username   The username to authenticate
      * @param password   The password corresponding to the given username
      * @return The Elasticsearch client with the given configuration
@@ -66,7 +82,7 @@ public class ElasticsearchUtils {
      * Creates a new Elasticsearch client.
      *
      * @param url        The URL of the Elasticsearch instance to reach
-     * @param sslContext The secure socket protocol implementation
+     * @param sslContext The secure socket protocol implementation, used without verifying the host name
      * @param apiKey     The encoded API key to authenticate
      * @return The Elasticsearch client with the given configuration
      */
