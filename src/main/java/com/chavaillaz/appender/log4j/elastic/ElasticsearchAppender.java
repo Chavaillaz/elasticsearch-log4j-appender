@@ -4,7 +4,6 @@ import static com.chavaillaz.appender.CommonUtils.getInitialHostname;
 import static com.chavaillaz.appender.CommonUtils.getProperty;
 import static org.apache.logging.log4j.core.Appender.ELEMENT_TYPE;
 import static org.apache.logging.log4j.core.Core.CATEGORY_NAME;
-import static org.apache.logging.log4j.core.layout.PatternLayout.createDefaultLayout;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -21,7 +20,6 @@ import lombok.experimental.Accessors;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
@@ -48,8 +46,8 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
      */
     private final @Nullable LogConverter converter;
 
-    protected ElasticsearchAppender(String name, @Nullable Filter filter, @Nullable Layout<?> layout, ElasticsearchConfiguration configuration) {
-        super(name, filter, layout, configuration);
+    protected ElasticsearchAppender(String name, @Nullable Filter filter, ElasticsearchConfiguration configuration) {
+        super(name, filter, configuration);
         this.converter = createConverter(configuration);
     }
 
@@ -103,9 +101,6 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
         @PluginBuilderAttribute
         @Required(message = "No appender name provided")
         private String name;
-
-        @PluginElement("Layout")
-        private Layout<String> layout = createDefaultLayout();
 
         @PluginElement("Filter")
         private Filter filter;
@@ -226,7 +221,7 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
                             .closeTimeout(Duration.ofMillis(getCloseTimeout()))
                             .build())
                     .build();
-            return new ElasticsearchAppender(getName(), getFilter(), getLayout(), configuration);
+            return new ElasticsearchAppender(getName(), getFilter(), configuration);
         }
 
         /**

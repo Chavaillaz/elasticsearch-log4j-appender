@@ -95,7 +95,6 @@ The certificate of Elasticsearch is verified unless `UrlTrusted` is set, where v
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
         <ElasticsearchAppender name="ElasticSearch">
-            <PatternLayout pattern="%msg"/>
             <Application>myApplication</Application>
             <Environment>local</Environment>
             <Converter>com.chavaillaz.appender.log4j.DefaultLogConverter</Converter>
