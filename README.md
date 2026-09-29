@@ -8,8 +8,8 @@
 [![Maven Central](https://maven-badges.sml.io/maven-central/com.chavaillaz/elasticsearch-log4j-appender/badge.svg?subject=Maven%20Central&color=blue)](https://maven-badges.sml.io/maven-central/com.chavaillaz/elasticsearch-log4j-appender)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Elasticsearch appender allows you to send log events directly from Log4j to an elastic cluster. The delivery of logs is
-asynchronous (i.e. not on the main thread) and therefore will not block execution of the program.
+Elasticsearch appender allows you to send log events directly from Log4j to an Elasticsearch cluster. The delivery of
+logs is asynchronous (i.e. not on the main thread) and therefore will not block execution of the program.
 
 | Appender version | Log4j version | Elastic version | Java version | Documentation   |
 |------------------|---------------|-----------------|--------------|-----------------|
@@ -21,14 +21,14 @@ asynchronous (i.e. not on the main thread) and therefore will not block executio
 | 2.1.3            | 2.24.1        | 8.x             | 17+          | [Version 2][v2] |
 | 3.0.0            | 2.24.1        | 8.x             | 17+          | See below       |
 | 3.0.1            | 2.24.3        | 8.x             | 17+          | See below       |
-| 3.0.2            | 2.15.1        | 8.x             | 17+          | See below       |
-| 3.1.0            | 2.15.1        | 9.x             | 17+          | See below       |
-| 3.1.1            | 2.15.3        | 9.x             | 17+          | See below       |
-| 3.1.2            | 2.15.4        | 9.x             | 17+          | See below       |
+| 3.0.2            | 2.25.1        | 8.x             | 17+          | See below       |
+| 3.1.0            | 2.25.1        | 9.x             | 17+          | See below       |
+| 3.1.1            | 2.25.3        | 9.x             | 17+          | See below       |
+| 3.1.2            | 2.25.4        | 9.x             | 17+          | See below       |
 
 ## Installation
 
-The dependency is available in maven central (see badge and table above for the version):
+The dependency is available in Maven Central (see badge and table above for the version):
 
 ```xml
 <dependency>
@@ -42,11 +42,11 @@ package to Log4j2 to be built as a plugin. The Elasticsearch client declaring no
 requires it by the names Java derives from its jars, `elasticsearch.java` and `elasticsearch.rest5.client`,
 which these jars keep as long as they keep the names Maven gives them.
 
-You then have to configure log4j to include this appender (see configuration section below).
+You then have to configure Log4j to include this appender (see configuration section below).
 
 ## Configuration
 
-In the Log4j configuration file, add a new appender `ElasticsearchAppender` using package 
+In the Log4j configuration file, add a new appender `ElasticsearchAppender` using package
 `com.chavaillaz.appender.log4j.elastic` with the following properties:
 
 | Appender property          | Environment / System variable | Default value               | Description                                                                                                                               |
@@ -77,7 +77,7 @@ In the Log4j configuration file, add a new appender `ElasticsearchAppender` usin
 | MaxRetryBackoff            | -                             | `30000`                     | The maximum delay (ms) between two retries.                                                                                               |
 | CloseTimeout               | -                             | `30000`                     | The maximum time (ms) a stop waits for the documents still pending, while the `shutdownTimeout` of the Log4j configuration is `0`.        |
 
-Note that `Url` is the only mandatory configuration, except if you need to overwrite the default value of other ones.
+Note that `Url` is the only mandatory configuration, except if you need to override the default value of other ones.
 
 The properties from `FlushThreshold` on tune the delivery of the documents, as the
 [common library](https://github.com/chavaillaz/common-log4j-appender#configuration-reference) details them.
