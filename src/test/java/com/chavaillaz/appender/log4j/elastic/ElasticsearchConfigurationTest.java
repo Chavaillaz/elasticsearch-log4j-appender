@@ -1,9 +1,11 @@
 package com.chavaillaz.appender.log4j.elastic;
 
+import static com.chavaillaz.appender.log4j.CommonUtils.getProperty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.OffsetDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -178,6 +180,50 @@ class ElasticsearchConfigurationTest {
         // Then: the attributes are listed, but for the values of the password and the API key
         assertThat(messages).anyMatch(message -> message.contains("User=\"elastic\""));
         assertThat(messages).noneMatch(message -> message.contains("my-password") || message.contains("my-api-key"));
+    }
+
+    @Test
+    void testMissingUrlFailsTheConfiguration() throws Exception {
+        // Given: no URL given by the ELASTIC_URL variable either
+        assumeTrue(getProperty("ELASTIC_URL", null) == null);
+
+        // When
+        LoggerContext context = startContext("""
+                <ElasticsearchAppender name="Elasticsearch"/>
+                """);
+
+        // Then: the appender is not created, rather than created unable to send anything
+        try {
+            assertThat(context.getConfiguration().getAppenders()).doesNotContainKey("Elasticsearch");
+        } finally {
+            context.stop();
+        }
+    }
+
+    @Test
+    void testUrlGivenByTheVariableIsEnough() throws Exception {
+        // Given: the URL given by the ELASTIC_URL variable, here as a system property
+        assumeTrue(System.getenv("ELASTIC_URL") == null);
+        System.setProperty("ELASTIC_URL", "http://localhost:1");
+
+        // When
+        LoggerContext context;
+        try {
+            context = startContext("""
+                    <ElasticsearchAppender name="Elasticsearch"/>
+                    """);
+        } finally {
+            System.clearProperty("ELASTIC_URL");
+        }
+
+        // Then
+        try {
+            ElasticsearchAppender appender = context.getConfiguration().getAppender("Elasticsearch");
+            assertThat(appender).isNotNull();
+            assertThat(appender.getLogConfiguration().getUrl()).isEqualTo("http://localhost:1");
+        } finally {
+            context.stop();
+        }
     }
 
     @Test

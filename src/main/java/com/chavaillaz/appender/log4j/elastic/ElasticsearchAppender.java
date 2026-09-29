@@ -126,6 +126,7 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
         private String elasticIndexSuffix = getProperty("INDEX_SUFFIX", "");
 
         @PluginBuilderAttribute("Url")
+        @Required(message = "No URL of Elasticsearch provided")
         private String elasticUrl = getProperty("ELASTIC_URL", null);
 
         @PluginBuilderAttribute("UrlTrusted")
