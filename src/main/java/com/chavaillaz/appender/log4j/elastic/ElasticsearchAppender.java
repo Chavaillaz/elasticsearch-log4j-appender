@@ -134,10 +134,14 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
         @PluginBuilderAttribute("User")
         private String elasticUser = getProperty("ELASTIC_USER", null);
 
-        @PluginBuilderAttribute("Password")
+        /**
+         * The password, which the status logger lists hashed among the attributes of the appender, as the API
+         * key, rather than as given.
+         */
+        @PluginBuilderAttribute(value = "Password", sensitive = true)
         private String elasticPassword = getProperty("ELASTIC_PASSWORD", null);
 
-        @PluginBuilderAttribute("ApiKey")
+        @PluginBuilderAttribute(value = "ApiKey", sensitive = true)
         private String elasticApiKey = getProperty("ELASTIC_API_KEY", null);
 
         @PluginBuilderAttribute("DeadLetterFile")

@@ -1,13 +1,18 @@
 package com.chavaillaz.appender.log4j.elastic;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.OffsetDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.chavaillaz.appender.DeliveryOptions;
 import com.chavaillaz.appender.LogConfiguration;
@@ -15,7 +20,13 @@ import com.chavaillaz.appender.log4j.DefaultLogConverter;
 import com.chavaillaz.appender.log4j.LogConverter;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.ConfigurationSource;
+import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
+import org.apache.logging.log4j.status.StatusData;
+import org.apache.logging.log4j.status.StatusListener;
+import org.apache.logging.log4j.status.StatusLogger;
 import org.junit.jupiter.api.Test;
 
 class ElasticsearchConfigurationTest {
@@ -131,6 +142,45 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    void testCredentialsAreHiddenFromTheStatusLogger() throws Exception {
+        // Given: every message of the status logger, down to the debug one listing the attributes of the appender
+        List<String> messages = new CopyOnWriteArrayList<>();
+        StatusListener listener = new StatusListener() {
+
+            @Override
+            public void log(StatusData data) {
+                messages.add(data.getFormattedStatus());
+            }
+
+            @Override
+            public Level getStatusLevel() {
+                return Level.DEBUG;
+            }
+
+            @Override
+            public void close() {
+                // Nothing to release
+            }
+
+        };
+        StatusLogger.getLogger().registerListener(listener);
+
+        // When
+        try {
+            startContext("""
+                    <ElasticsearchAppender name="Elasticsearch" Url="http://localhost:1"
+                                           User="elastic" Password="my-password" ApiKey="my-api-key"/>
+                    """).stop();
+        } finally {
+            StatusLogger.getLogger().removeListener(listener);
+        }
+
+        // Then: the attributes are listed, but for the values of the password and the API key
+        assertThat(messages).anyMatch(message -> message.contains("User=\"elastic\""));
+        assertThat(messages).noneMatch(message -> message.contains("my-password") || message.contains("my-api-key"));
+    }
+
+    @Test
     void testWrongConverter() {
         // Given
         ElasticsearchAppender appender = ElasticsearchAppender.builder()
@@ -160,6 +210,32 @@ class ElasticsearchConfigurationTest {
         // Then
         assertThat(converter).isInstanceOf(ApplicationConverter.class);
         assertThat(converter.convert(Log4jLogEvent.newBuilder().build())).containsEntry("application", "my-application");
+    }
+
+    /**
+     * Starts a dedicated context configured in XML, as an application configures the appender, rather than
+     * reconfiguring the one the other tests log through.
+     *
+     * @param appender The XML element of the appender, named {@code Elasticsearch}
+     * @return The started context, to stop once done with it
+     * @throws IOException If the configuration cannot be read
+     */
+    private static LoggerContext startContext(String appender) throws IOException {
+        String xml = """
+                <Configuration status="ERROR">
+                    <Appenders>
+                        %s
+                    </Appenders>
+                    <Loggers>
+                        <Root level="INFO">
+                            <AppenderRef ref="Elasticsearch"/>
+                        </Root>
+                    </Loggers>
+                </Configuration>
+                """.formatted(appender);
+        LoggerContext context = new LoggerContext(ElasticsearchConfigurationTest.class.getSimpleName());
+        context.start(new XmlConfiguration(context, new ConfigurationSource(new ByteArrayInputStream(xml.getBytes(UTF_8)))));
+        return context;
     }
 
     public static class ApplicationConverter implements LogConverter {
