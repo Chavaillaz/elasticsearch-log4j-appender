@@ -3,7 +3,7 @@
  * is opened to.
  * <p>
  * The Elasticsearch client and its REST client declare no module name: they are required by the names the JDK
- * derives from their jars, {@code elasticsearch.java} and {@code elasticsearch.rest.client}, which the jars keep
+ * derives from their jars, {@code elasticsearch.java} and {@code elasticsearch.rest5.client}, which the jars keep
  * as long as they are not renamed. The warning of javac against a transitive dependency on them is
  * suppressed, the API of the appender exposing the client as it is.
  */
@@ -12,10 +12,9 @@ module com.chavaillaz.appender.log4j.elastic {
 
     requires transitive com.chavaillaz.appender;
     requires transitive elasticsearch.java;
-    requires transitive elasticsearch.rest.client;
-    requires org.apache.httpcomponents.httpasyncclient;
-    requires org.apache.httpcomponents.httpclient;
-    requires org.apache.httpcomponents.httpcore;
+    requires transitive elasticsearch.rest5.client;
+    requires org.apache.httpcomponents.client5.httpclient5;
+    requires org.apache.httpcomponents.core5.httpcore5;
     requires tools.jackson.databind;
     requires static lombok;
 

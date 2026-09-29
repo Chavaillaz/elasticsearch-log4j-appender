@@ -39,7 +39,7 @@ The dependency is available in maven central (see badge and table above for the 
 
 On the module path, the appender is the module `com.chavaillaz.appender.log4j.elastic`, which opens its
 package to Log4j2 to be built as a plugin. The Elasticsearch client declaring no module name, the appender
-requires it by the names Java derives from its jars, `elasticsearch.java` and `elasticsearch.rest.client`,
+requires it by the names Java derives from its jars, `elasticsearch.java` and `elasticsearch.rest5.client`,
 which these jars keep as long as they keep the names Maven gives them.
 
 You then have to configure log4j to include this appender (see configuration section below).

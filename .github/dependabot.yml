@@ -22,7 +22,7 @@ updates:
       # of Elasticsearch, and changes the clusters the appender supports, which is a decision rather than an update
       - dependency-name: "co.elastic.clients:elasticsearch-java"
         update-types: [ "version-update:semver-major" ]
-      - dependency-name: "org.elasticsearch.client:elasticsearch-rest-client"
+      - dependency-name: "co.elastic.clients:elasticsearch-rest5-client"
         update-types: [ "version-update:semver-major" ]
 
   # The actions the workflows run on, whose major tag is what is pinned, so that only the next major shows up

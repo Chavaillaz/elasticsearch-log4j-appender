@@ -1,24 +1,26 @@
 package com.chavaillaz.appender.log4j.elastic;
 
-import static org.apache.http.auth.AuthScope.ANY;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.net.URISyntaxException;
+import java.util.Base64;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import javax.net.ssl.SSLContext;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.TrustAllStrategy;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
+import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.TrustAllStrategy;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Elasticsearch specific utility methods.
@@ -35,25 +37,18 @@ public class ElasticsearchUtils {
      * @return The Elasticsearch client with the given configuration
      */
     public static ElasticsearchAsyncClient createClient(ElasticsearchConfiguration configuration) {
-        RestClientBuilder builder = RestClient.builder(HttpHost.create(configuration.getUrl()));
+        Rest5ClientBuilder builder = Rest5Client.builder(toHost(configuration.getUrl()));
         String apiKey = configuration.getApiKey();
-        boolean withApiKey = apiKey != null && !apiKey.isBlank();
-        if (withApiKey) {
-            builder.setDefaultHeaders(new Header[]{new BasicHeader("Authorization", "ApiKey " + apiKey)});
+        if (apiKey != null && !apiKey.isBlank()) {
+            builder.setDefaultHeaders(new Header[]{apiKeyAuthorization(apiKey)});
+        } else if (configuration.getUser() != null) {
+            builder.setDefaultHeaders(new Header[]{basicAuthorization(configuration.getUser(), configuration.getPassword())});
         }
-        builder.setHttpClientConfigCallback(httpClientBuilder -> {
-            if (!withApiKey && configuration.getUser() != null) {
-                CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-                credentialsProvider.setCredentials(ANY, new UsernamePasswordCredentials(configuration.getUser(), configuration.getPassword()));
-                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-            }
-            if (configuration.isUrlTrusted()) {
-                httpClientBuilder
-                        .setSSLContext(createPermissiveContext())
-                        .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-            }
-            return httpClientBuilder;
-        });
+        if (configuration.isUrlTrusted()) {
+            SSLContext permissiveContext = createPermissiveContext();
+            builder.setConnectionManagerCallback(connectionManager -> connectionManager
+                    .setTlsStrategy(new DefaultClientTlsStrategy(permissiveContext, NoopHostnameVerifier.INSTANCE)));
+        }
         return createClient(builder.build());
     }
 
@@ -67,15 +62,11 @@ public class ElasticsearchUtils {
      * @return The Elasticsearch client with the given configuration
      */
     public static ElasticsearchAsyncClient createClient(String url, SSLContext sslContext, String username, String password) {
-        CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(ANY, new UsernamePasswordCredentials(username, password));
-        return createClient(RestClient
-                .builder(HttpHost.create(url))
-                .setHttpClientConfigCallback(httpClientBuilder ->
-                        httpClientBuilder
-                                .setDefaultCredentialsProvider(credentialsProvider)
-                                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-                                .setSSLContext(sslContext))
+        return createClient(Rest5Client
+                .builder(toHost(url))
+                .setDefaultHeaders(new Header[]{basicAuthorization(username, password)})
+                .setConnectionManagerCallback(connectionManager -> connectionManager
+                        .setTlsStrategy(new DefaultClientTlsStrategy(sslContext, NoopHostnameVerifier.INSTANCE)))
                 .build());
     }
 
@@ -88,14 +79,11 @@ public class ElasticsearchUtils {
      * @return The Elasticsearch client with the given configuration
      */
     public static ElasticsearchAsyncClient createClient(String url, SSLContext sslContext, String apiKey) {
-        Header headerApiKey = new BasicHeader("Authorization", "ApiKey " + apiKey);
-        return createClient(RestClient
-                .builder(HttpHost.create(url))
-                .setDefaultHeaders(new Header[]{headerApiKey})
-                .setHttpClientConfigCallback(httpClientBuilder ->
-                        httpClientBuilder
-                                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-                                .setSSLContext(sslContext))
+        return createClient(Rest5Client
+                .builder(toHost(url))
+                .setDefaultHeaders(new Header[]{apiKeyAuthorization(apiKey)})
+                .setConnectionManagerCallback(connectionManager -> connectionManager
+                        .setTlsStrategy(new DefaultClientTlsStrategy(sslContext, NoopHostnameVerifier.INSTANCE)))
                 .build());
     }
 
@@ -106,8 +94,8 @@ public class ElasticsearchUtils {
      * @param restClient The REST client to use
      * @return The Elasticsearch client with the given configuration
      */
-    public static ElasticsearchAsyncClient createClient(RestClient restClient) {
-        return new ElasticsearchAsyncClient(new RestClientTransport(restClient, new Jackson3JsonpMapper()));
+    public static ElasticsearchAsyncClient createClient(Rest5Client restClient) {
+        return new ElasticsearchAsyncClient(new Rest5ClientTransport(restClient, new Jackson3JsonpMapper()));
     }
 
     /**
@@ -117,9 +105,48 @@ public class ElasticsearchUtils {
      */
     @SneakyThrows
     public static SSLContext createPermissiveContext() {
-        return new SSLContextBuilder()
+        return SSLContexts.custom()
                 .loadTrustMaterial(null, TrustAllStrategy.INSTANCE)
                 .build();
+    }
+
+    /**
+     * Parses the address of Elasticsearch.
+     *
+     * @param url The address, in the format {@code scheme://host:port}, the scheme defaulting to {@code http}
+     * @return The host to send the requests to
+     * @throws IllegalArgumentException If the address is not in that format
+     */
+    private static HttpHost toHost(String url) {
+        try {
+            return HttpHost.create(url);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid URL of Elasticsearch: " + url, e);
+        }
+    }
+
+    /**
+     * Creates the header authenticating with the given user. Sent with every request, rather than in answer to
+     * the challenge of Elasticsearch, which the REST client would otherwise meet anew for each of them, not
+     * keeping the authentication from one request to the next.
+     *
+     * @param username The username to authenticate
+     * @param password The password corresponding to the given username, or {@code null} for none
+     * @return The authorization header
+     */
+    private static Header basicAuthorization(String username, @Nullable String password) {
+        String credentials = username + ":" + (password != null ? password : "");
+        return new BasicHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(UTF_8)));
+    }
+
+    /**
+     * Creates the header authenticating with the given API key.
+     *
+     * @param apiKey The encoded API key to authenticate
+     * @return The authorization header
+     */
+    private static Header apiKeyAuthorization(String apiKey) {
+        return new BasicHeader("Authorization", "ApiKey " + apiKey);
     }
 
 }

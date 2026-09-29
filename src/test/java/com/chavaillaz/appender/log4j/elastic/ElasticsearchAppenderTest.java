@@ -5,13 +5,16 @@ import static java.net.InetAddress.getLocalHost;
 import static java.time.Duration.ofSeconds;
 import static org.apache.logging.log4j.Level.INFO;
 import static org.apache.logging.log4j.LogManager.getRootLogger;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
+import java.security.cert.CertPathBuilderException;
 import java.util.List;
 import java.util.UUID;
 
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -20,6 +23,8 @@ import javax.net.ssl.SSLContext;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.SimpleMessage;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -32,6 +37,9 @@ class ElasticsearchAppenderTest {
     public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
             .withTag("9.4.4");
+
+    // A single cluster for every test, starting one taking most of their time
+    private static final ElasticsearchContainer CONTAINER = new ElasticsearchContainer(ELASTICSEARCH_IMAGE);
 
     protected static String createApiKey(ElasticsearchClient client) throws IOException {
         return client.security()
@@ -71,45 +79,72 @@ class ElasticsearchAppenderTest {
                 .toList();
     }
 
+    @BeforeAll
+    static void startContainer() {
+        CONTAINER.start();
+    }
+
+    @AfterAll
+    static void stopContainer() {
+        CONTAINER.stop();
+    }
+
     @Test
     void systemTestWithElasticsearch() throws Exception {
-        try (ElasticsearchContainer container = new ElasticsearchContainer(ELASTICSEARCH_IMAGE)) {
-            container.start();
+        // Given
+        String id = UUID.randomUUID().toString();
+        String logger = getRootLogger().getClass().getCanonicalName();
+        String address = "https://" + CONTAINER.getHttpHostAddress();
+        SSLContext ssl = CONTAINER.createSslContextFromCa();
+        ElasticsearchClient client = new ElasticsearchClient(createClient(address, ssl, ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD)._transport());
+        ElasticsearchClient apiClient = new ElasticsearchClient(createClient(address, ssl, createApiKey(client))._transport());
+        ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), address);
+        ThreadContext.put("key", "value");
 
-            // Given
-            String id = UUID.randomUUID().toString();
-            String logger = getRootLogger().getClass().getCanonicalName();
-            String address = "https://" + container.getHttpHostAddress();
-            SSLContext ssl = container.createSslContextFromCa();
-            ElasticsearchClient client = new ElasticsearchClient(createClient(address, ssl, ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD)._transport());
-            ElasticsearchClient apiClient = new ElasticsearchClient(createClient(address, ssl, createApiKey(client))._transport());
-            ElasticsearchAppender appender = createAppender("myApplication", getLocalHost().getHostName(), address);
-            ThreadContext.put("key", "value");
+        // When
+        appender.start();
+        Log4jLogEvent event = Log4jLogEvent.newBuilder()
+                .setMessage(new SimpleMessage(id))
+                .setLoggerFqcn(logger)
+                .setThrown(new RuntimeException())
+                .setLevel(INFO)
+                .build();
+        appender.append(event);
+        Thread.sleep(ofSeconds(5));
+        appender.stop();
 
-            // When
-            appender.start();
-            Log4jLogEvent event = Log4jLogEvent.newBuilder()
-                    .setMessage(new SimpleMessage(id))
-                    .setLoggerFqcn(logger)
-                    .setThrown(new RuntimeException())
-                    .setLevel(INFO)
-                    .build();
-            appender.append(event);
-            Thread.sleep(ofSeconds(5));
-            appender.stop();
+        // Then
+        List<ElasticsearchLog> logs = searchLog(apiClient, appender.getLogConfiguration().getIndex(), id);
+        assertEquals(1, logs.size());
+        ElasticsearchLog log = logs.get(0);
+        assertEquals(appender.getLogConfiguration().getHost(), log.getHost());
+        assertEquals(appender.getLogConfiguration().getEnvironment(), log.getEnvironment());
+        assertEquals(appender.getLogConfiguration().getApplication(), log.getApplication());
+        assertEquals(logger, log.getLogger());
+        assertEquals(INFO.toString(), log.getLevel());
+        assertEquals(id, log.getLogmessage());
+        assertEquals("value", log.getKey());
+        assertNotNull(log.getStacktrace());
+    }
 
-            // Then
-            List<ElasticsearchLog> logs = searchLog(apiClient, appender.getLogConfiguration().getIndex(), id);
-            assertEquals(1, logs.size());
-            ElasticsearchLog log = logs.get(0);
-            assertEquals(appender.getLogConfiguration().getHost(), log.getHost());
-            assertEquals(appender.getLogConfiguration().getEnvironment(), log.getEnvironment());
-            assertEquals(appender.getLogConfiguration().getApplication(), log.getApplication());
-            assertEquals(logger, log.getLogger());
-            assertEquals(INFO.toString(), log.getLevel());
-            assertEquals(id, log.getLogmessage());
-            assertEquals("value", log.getKey());
-            assertNotNull(log.getStacktrace());
+    @Test
+    void testCertificateIsVerifiedUnlessTrusted() throws Exception {
+        // Given: the self-signed certificate of the container, which the JVM does not trust
+        ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
+                .url("https://" + CONTAINER.getHttpHostAddress())
+                .user(ELASTICSEARCH_USERNAME)
+                .password(ELASTICSEARCH_PASSWORD)
+                .build();
+
+        // When / Then: the connection is refused, unless trusting any certificate
+        try (ElasticsearchAsyncClient client = createClient(configuration)) {
+            assertThat(client.info()).failsWithin(ofSeconds(30))
+                    .withThrowableThat()
+                    .havingRootCause()
+                    .isInstanceOf(CertPathBuilderException.class);
+        }
+        try (ElasticsearchAsyncClient client = createClient(configuration.toBuilder().urlTrusted(true).build())) {
+            assertThat(client.info()).succeedsWithin(ofSeconds(30));
         }
     }
 
