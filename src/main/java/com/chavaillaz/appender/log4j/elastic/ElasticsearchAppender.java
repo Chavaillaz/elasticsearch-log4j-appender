@@ -144,7 +144,7 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
         private String deadLetterFile = getProperty("DEAD_LETTER_FILE", null);
 
         @PluginBuilderAttribute("FlushThreshold")
-        private long flushThreshold = DEFAULTS.flushThreshold();
+        private int flushThreshold = DEFAULTS.flushThreshold();
 
         @PluginBuilderAttribute("FlushInterval")
         private long flushInterval = DEFAULTS.flushInterval().toMillis();
