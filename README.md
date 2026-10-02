@@ -5,7 +5,7 @@
 
 ![Quality Gate](https://github.com/chavaillaz/elasticsearch-log4j-appender/actions/workflows/code-quality.yml/badge.svg)
 ![Dependency Check](https://github.com/chavaillaz/elasticsearch-log4j-appender/actions/workflows/dependency-check.yml/badge.svg)
-[![Maven Central](https://maven-badges.sml.io/maven-central/com.chavaillaz/elasticsearch-log4j-appender/badge.svg?subject=Maven%20Central&color=blue)](https://maven-badges.sml.io/maven-central/com.chavaillaz/elasticsearch-log4j-appender)
+[![Maven Central](https://maven-badges.sml.io/sonatype-central/com.chavaillaz/elasticsearch-log4j-appender/badge.svg?subject=Maven%20Central&color=blue)](https://maven-badges.sml.io/sonatype-central/com.chavaillaz/elasticsearch-log4j-appender)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Elasticsearch appender allows you to send log events directly from Log4j to an Elasticsearch cluster. The delivery of
