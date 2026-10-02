@@ -39,10 +39,11 @@ public class ElasticsearchUtils {
     public static ElasticsearchAsyncClient createClient(ElasticsearchConfiguration configuration) {
         Rest5ClientBuilder builder = Rest5Client.builder(toHost(configuration.getUrl()));
         String apiKey = configuration.getApiKey();
+        String user = configuration.getUser();
         if (apiKey != null && !apiKey.isBlank()) {
             builder.setDefaultHeaders(new Header[]{apiKeyAuthorization(apiKey)});
-        } else if (configuration.getUser() != null) {
-            builder.setDefaultHeaders(new Header[]{basicAuthorization(configuration.getUser(), configuration.getPassword())});
+        } else if (user != null) {
+            builder.setDefaultHeaders(new Header[]{basicAuthorization(user, configuration.getPassword())});
         }
         if (configuration.isUrlTrusted()) {
             SSLContext permissiveContext = createPermissiveContext();
