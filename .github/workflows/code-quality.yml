@@ -40,7 +40,7 @@ jobs:
       - name: SonarQube Scan
         # Analysed once, on the version the appender is compiled for. A Dependabot build reads the Dependabot
         # secrets, where the token is only found once it is copied there, the build itself still saying whether
-        # the change compiles and passes the tests
+        # the change compiles and passes the tests and the checkstyle
         if: env.SONAR_TOKEN != '' && matrix.java == '21'
         uses: sonarsource/sonarqube-scan-action@v8
         env:

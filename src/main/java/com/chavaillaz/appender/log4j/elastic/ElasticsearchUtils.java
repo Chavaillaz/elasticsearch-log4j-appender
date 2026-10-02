@@ -4,13 +4,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.net.URISyntaxException;
 import java.util.Base64;
+import javax.net.ssl.SSLContext;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
-import javax.net.ssl.SSLContext;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;

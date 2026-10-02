@@ -17,11 +17,12 @@ import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.bulk.OperationType;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import com.chavaillaz.appender.DeliveryOptions;
 import com.chavaillaz.appender.DocumentSizeEstimator;
 import com.chavaillaz.appender.TransmissionResult;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 class ElasticsearchLogDeliveryTest {
 

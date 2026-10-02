@@ -20,11 +20,12 @@ import co.elastic.clients.elasticsearch._types.ErrorResponse;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import org.jspecify.annotations.Nullable;
+
 import com.chavaillaz.appender.FileDeadLetterListener;
 import com.chavaillaz.appender.LogDeliveryListener;
 import com.chavaillaz.appender.TransmissionResult;
 import com.chavaillaz.appender.log4j.AbstractBatchLogDelivery;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Implementation of logs transmission for Elasticsearch, through its asynchronous client: a bulk request

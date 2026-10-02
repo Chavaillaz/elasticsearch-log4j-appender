@@ -16,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.chavaillaz.appender.DeliveryOptions;
-import com.chavaillaz.appender.LogConfiguration;
-import com.chavaillaz.appender.log4j.DefaultLogConverter;
-import com.chavaillaz.appender.log4j.LogConverter;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -30,6 +26,11 @@ import org.apache.logging.log4j.status.StatusData;
 import org.apache.logging.log4j.status.StatusListener;
 import org.apache.logging.log4j.status.StatusLogger;
 import org.junit.jupiter.api.Test;
+
+import com.chavaillaz.appender.DeliveryOptions;
+import com.chavaillaz.appender.LogConfiguration;
+import com.chavaillaz.appender.log4j.DefaultLogConverter;
+import com.chavaillaz.appender.log4j.LogConverter;
 
 class ElasticsearchConfigurationTest {
 

@@ -9,11 +9,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 
-import com.chavaillaz.appender.DeliveryOptions;
-import com.chavaillaz.appender.LogDelivery;
-import com.chavaillaz.appender.log4j.AbstractLogDeliveryAppender;
-import com.chavaillaz.appender.log4j.DefaultLogConverter;
-import com.chavaillaz.appender.log4j.LogConverter;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -27,6 +22,12 @@ import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 import org.apache.logging.log4j.status.StatusLogger;
 import org.jspecify.annotations.Nullable;
+
+import com.chavaillaz.appender.DeliveryOptions;
+import com.chavaillaz.appender.LogDelivery;
+import com.chavaillaz.appender.log4j.AbstractLogDeliveryAppender;
+import com.chavaillaz.appender.log4j.DefaultLogConverter;
+import com.chavaillaz.appender.log4j.LogConverter;
 
 /**
  * Appender implementation using Elasticsearch for transmissions of logs from Log4j.

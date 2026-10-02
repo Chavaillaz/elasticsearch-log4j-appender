@@ -13,13 +13,13 @@ import java.io.IOException;
 import java.security.cert.CertPathBuilderException;
 import java.util.List;
 import java.util.UUID;
+import javax.net.ssl.SSLContext;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.security.CreateApiKeyRequest;
-import javax.net.ssl.SSLContext;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.SimpleMessage;

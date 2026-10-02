@@ -5,12 +5,13 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-import com.chavaillaz.appender.DeliveryOptions;
-import com.chavaillaz.appender.LogConfiguration;
-import com.chavaillaz.appender.log4j.DefaultLogConverter;
 import lombok.Builder;
 import lombok.Value;
 import org.jspecify.annotations.Nullable;
+
+import com.chavaillaz.appender.DeliveryOptions;
+import com.chavaillaz.appender.LogConfiguration;
+import com.chavaillaz.appender.log4j.DefaultLogConverter;
 
 /**
  * Configuration for logs transmissions using Elasticsearch, immutable once built through {@link #builder()}.
