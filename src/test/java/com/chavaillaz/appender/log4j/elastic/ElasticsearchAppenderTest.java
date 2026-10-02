@@ -6,8 +6,6 @@ import static java.time.Duration.ofSeconds;
 import static org.apache.logging.log4j.Level.INFO;
 import static org.apache.logging.log4j.LogManager.getRootLogger;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.security.cert.CertPathBuilderException;
@@ -115,16 +113,16 @@ class ElasticsearchAppenderTest {
 
         // Then
         List<ElasticsearchLog> logs = searchLog(apiClient, appender.getLogConfiguration().getIndex(), id);
-        assertEquals(1, logs.size());
+        assertThat(logs).hasSize(1);
         ElasticsearchLog log = logs.get(0);
-        assertEquals(appender.getLogConfiguration().getHost(), log.getHost());
-        assertEquals(appender.getLogConfiguration().getEnvironment(), log.getEnvironment());
-        assertEquals(appender.getLogConfiguration().getApplication(), log.getApplication());
-        assertEquals(logger, log.getLogger());
-        assertEquals(INFO.toString(), log.getLevel());
-        assertEquals(id, log.getLogmessage());
-        assertEquals("value", log.getKey());
-        assertNotNull(log.getStacktrace());
+        assertThat(log.getHost()).isEqualTo(appender.getLogConfiguration().getHost());
+        assertThat(log.getEnvironment()).isEqualTo(appender.getLogConfiguration().getEnvironment());
+        assertThat(log.getApplication()).isEqualTo(appender.getLogConfiguration().getApplication());
+        assertThat(log.getLogger()).isEqualTo(logger);
+        assertThat(log.getLevel()).isEqualTo(INFO.toString());
+        assertThat(log.getLogmessage()).isEqualTo(id);
+        assertThat(log.getKey()).isEqualTo("value");
+        assertThat(log.getStacktrace()).isNotNull();
     }
 
     @Test

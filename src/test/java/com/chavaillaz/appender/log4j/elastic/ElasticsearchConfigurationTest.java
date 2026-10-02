@@ -5,7 +5,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.OffsetDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -186,7 +186,7 @@ class ElasticsearchConfigurationTest {
     @Test
     void testMissingUrlFailsTheConfiguration() throws Exception {
         // Given: no URL given by the ELASTIC_URL variable either
-        assumeTrue(getProperty("ELASTIC_URL", null) == null);
+        assumeThat(getProperty("ELASTIC_URL", null)).isNull();
 
         // When
         LoggerContext context = startContext("""
@@ -204,7 +204,7 @@ class ElasticsearchConfigurationTest {
     @Test
     void testUrlGivenByTheVariableIsEnough() throws Exception {
         // Given: the URL given by the ELASTIC_URL variable, here as a system property
-        assumeTrue(System.getenv("ELASTIC_URL") == null);
+        assumeThat(System.getenv("ELASTIC_URL")).isNull();
         System.setProperty("ELASTIC_URL", "http://localhost:1");
 
         // When
