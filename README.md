@@ -76,7 +76,7 @@ In the Log4j configuration file, add a new appender `ElasticsearchAppender` usin
 | MaxQueuedEvents            | -                             | `10000`                     | The maximum number of events waiting to be converted, the oldest one being discarded past it.                                             |
 | RetryBackoff               | -                             | `1000`                      | The base delay (ms) before retrying a failed transmission, doubling with each consecutive failure, `0` retrying at once.                  |
 | MaxRetryBackoff            | -                             | `30000`                     | The maximum delay (ms) between two retries.                                                                                               |
-| CloseTimeout               | -                             | `30000`                     | The maximum time (ms) a stop waits for the documents still pending, while the `shutdownTimeout` of the Log4j configuration is `0`.        |
+| CloseTimeout               | -                             | `5000`                      | The maximum time (ms) a stop waits for the documents still pending, while the `shutdownTimeout` of the Log4j configuration is `0`.        |
 
 Note that `Url` is the only mandatory configuration, except if you need to override the default value of other ones.
 
