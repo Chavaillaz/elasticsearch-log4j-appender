@@ -4,6 +4,7 @@ import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createCli
 import static java.time.OffsetDateTime.now;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -185,7 +186,7 @@ public class ElasticsearchLogDelivery extends AbstractBatchLogDelivery<Elasticse
     }
 
     @Override
-    public void close(@Nullable Duration timeout) throws Exception {
+    public void close(@Nullable Duration timeout) throws IOException {
         super.close(timeout);
         client.close();
     }
