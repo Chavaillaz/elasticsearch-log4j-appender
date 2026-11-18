@@ -51,12 +51,12 @@ class ElasticsearchAppenderTest {
     protected static ElasticsearchAppender createAppender(String application, String hostname, String elastic) {
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder();
         builder.setName("ElasticAppender");
-        builder.setApplicationName(application);
-        builder.setHostName(hostname);
-        builder.setElasticUrl(elastic);
-        builder.setElasticUrlTrusted(true);
-        builder.setElasticUser(ELASTICSEARCH_USERNAME);
-        builder.setElasticPassword(ELASTICSEARCH_PASSWORD);
+        builder.setApplication(application);
+        builder.setHost(hostname);
+        builder.setUrl(elastic);
+        builder.setUrlTrusted(true);
+        builder.setUser(ELASTICSEARCH_USERNAME);
+        builder.setPassword(ELASTICSEARCH_PASSWORD);
         builder.setFlushInterval(500);
         builder.setFlushThreshold(5);
         return builder.build();

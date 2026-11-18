@@ -1,6 +1,5 @@
 package com.chavaillaz.appender.log4j.elastic;
 
-import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -11,7 +10,6 @@ import org.jspecify.annotations.Nullable;
 
 import com.chavaillaz.appender.DeliveryOptions;
 import com.chavaillaz.appender.LogConfiguration;
-import com.chavaillaz.appender.log4j.DefaultLogConverter;
 
 /**
  * Configuration for logs transmissions using Elasticsearch, immutable once built through {@link #builder()}.
@@ -33,13 +31,6 @@ public class ElasticsearchConfiguration implements LogConfiguration {
     String application;
     String host;
     String environment;
-
-    /**
-     * The class name of the converter turning a logging event into a document, created through its public
-     * constructor taking this configuration.
-     */
-    @Builder.Default
-    String converter = DefaultLogConverter.class.getName();
 
     /**
      * The name of the index to which the documents are sent.
@@ -70,12 +61,6 @@ public class ElasticsearchConfiguration implements LogConfiguration {
      * The API key, already encoded, used rather than the user and password when set.
      */
     @Nullable String apiKey;
-
-    /**
-     * The file the documents dropped are saved to, rotated every day, or {@code null} to only report them
-     * on the status logger.
-     */
-    @Nullable Path deadLetterFile;
 
     /**
      * How the logs are batched, retried and shipped.

@@ -1,36 +1,32 @@
 package com.chavaillaz.appender.log4j.elastic;
 
-import static com.chavaillaz.appender.log4j.CommonUtils.getProperty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.OffsetDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
-import org.apache.logging.log4j.core.impl.Log4jLogEvent;
+import org.apache.logging.log4j.core.util.NetUtils;
 import org.apache.logging.log4j.status.StatusData;
 import org.apache.logging.log4j.status.StatusListener;
 import org.apache.logging.log4j.status.StatusLogger;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import com.chavaillaz.appender.DeliveryOptions;
-import com.chavaillaz.appender.LogConfiguration;
-import com.chavaillaz.appender.log4j.DefaultLogConverter;
-import com.chavaillaz.appender.log4j.LogConverter;
 
 class ElasticsearchConfigurationTest {
 
@@ -113,7 +109,7 @@ class ElasticsearchConfigurationTest {
         // Given
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
                 .setName("appender")
-                .setHostName("my-host");
+                .setHost("my-host");
 
         // When
         String host = builder.build().getLogConfiguration().getHost();
@@ -123,14 +119,13 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
-    void testHostNameIsOnlyResolvedWhenBuilding() {
-        // Given: a builder, which Log4j2 creates before setting the attributes of the configuration
+    void testHostDefaultsToTheMachine() {
+        // Given: a builder created in code, which no configuration of Log4j2 fills
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
                 .setName("appender");
 
-        // When / Then: nothing looked up yet, however long the lookup takes, the host possibly being given later
-        assertThat(builder.getHostName()).isNull();
-        assertThat(builder.build().getLogConfiguration().getHost()).isNotBlank();
+        // When / Then: the name of the machine, as the ${hostName} of a configuration gives it
+        assertThat(builder.build().getLogConfiguration().getHost()).isEqualTo(NetUtils.getLocalHostname());
     }
 
     @Test
@@ -185,9 +180,6 @@ class ElasticsearchConfigurationTest {
 
     @Test
     void testMissingUrlFailsTheConfiguration() throws Exception {
-        // Given: no URL given by the ELASTIC_URL variable either
-        assumeThat(getProperty("ELASTIC_URL", null)).isNull();
-
         // When
         LoggerContext context = startContext("""
                 <ElasticsearchAppender name="Elasticsearch"/>
@@ -202,16 +194,15 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
-    void testUrlGivenByTheVariableIsEnough() throws Exception {
-        // Given: the URL given by the ELASTIC_URL variable, here as a system property
-        assumeThat(System.getenv("ELASTIC_URL")).isNull();
+    void testUrlGivenThroughALookup() throws Exception {
+        // Given: the URL given by a system property, as an environment variable through ${env:ELASTIC_URL}
         System.setProperty("ELASTIC_URL", "http://localhost:1");
 
         // When
         LoggerContext context;
         try {
             context = startContext("""
-                    <ElasticsearchAppender name="Elasticsearch"/>
+                    <ElasticsearchAppender name="Elasticsearch" Url="${sys:ELASTIC_URL}"/>
                     """);
         } finally {
             System.clearProperty("ELASTIC_URL");
@@ -228,35 +219,25 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
-    void testWrongConverter() {
-        // Given
-        ElasticsearchAppender appender = ElasticsearchAppender.builder()
-                .setName("appender")
-                .setElasticConverter("package.does.not.exist.NotFoundConverter")
-                .build();
+    void testDroppedDocumentsReachTheNestedDeadLetterAppender(@TempDir Path directory) throws Exception {
+        // Given: a cluster that cannot be reached, a single attempt per document, and a file appender nested in
+        // the element for the documents dropped
+        Path file = directory.resolve("dead-letters.ndjson");
+        LoggerContext context = startContext("""
+                <ElasticsearchAppender name="Elasticsearch" Url="http://localhost:1" FlushThreshold="1" MaxConsecutiveFailures="1">
+                    <File name="DeadLetters" fileName="%s">
+                        <PatternLayout pattern="%%m%%n"/>
+                    </File>
+                </ElasticsearchAppender>
+                """.formatted(file));
 
         // When
-        LogConverter converter = appender.getLogConverter();
+        context.getLogger("dead-letters").error("saved");
+        context.stop();
 
-        // Then
-        assertThat(converter.getClass()).isEqualTo(DefaultLogConverter.class);
-    }
-
-    @Test
-    void testNamedConverterIsBuiltWithTheConfiguration() {
-        // Given
-        ElasticsearchAppender appender = ElasticsearchAppender.builder()
-                .setName("appender")
-                .setApplicationName("my-application")
-                .setElasticConverter(ApplicationConverter.class.getName())
-                .build();
-
-        // When
-        LogConverter converter = appender.getLogConverter();
-
-        // Then
-        assertThat(converter).isInstanceOf(ApplicationConverter.class);
-        assertThat(converter.convert(Log4jLogEvent.newBuilder().build())).containsEntry("application", "my-application");
+        // Then: the document given up on is a line of the file, which the appender closed as it stopped
+        assertThat(Files.readAllLines(file, UTF_8)).singleElement()
+                .satisfies(line -> assertThat(line).contains("\"logmessage\":\"saved\""));
     }
 
     /**
@@ -283,21 +264,6 @@ class ElasticsearchConfigurationTest {
         LoggerContext context = new LoggerContext(ElasticsearchConfigurationTest.class.getSimpleName());
         context.start(new XmlConfiguration(context, new ConfigurationSource(new ByteArrayInputStream(xml.getBytes(UTF_8)))));
         return context;
-    }
-
-    public static class ApplicationConverter implements LogConverter {
-
-        private final LogConfiguration configuration;
-
-        public ApplicationConverter(LogConfiguration configuration) {
-            this.configuration = configuration;
-        }
-
-        @Override
-        public Map<String, Object> convert(LogEvent event) {
-            return Map.of("application", configuration.getApplication());
-        }
-
     }
 
 }
