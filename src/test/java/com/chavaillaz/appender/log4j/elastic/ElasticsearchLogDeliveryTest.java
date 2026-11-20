@@ -1,11 +1,11 @@
 package com.chavaillaz.appender.log4j.elastic;
 
 import static com.chavaillaz.appender.log4j.elastic.ElasticsearchLogDelivery.toResult;
+import static java.time.OffsetDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.ServerSocket;
 import java.time.Duration;
-import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -166,7 +166,7 @@ class ElasticsearchLogDeliveryTest {
         String withOtherDate = delivery.indexOf(Map.of("datetime", "15/01/2020"));
 
         // Then
-        String today = "logs" + OffsetDateTime.now().format(DateTimeFormatter.ofPattern("-yyyy.MM.dd"));
+        String today = "logs" + now().format(DateTimeFormatter.ofPattern("-yyyy.MM.dd"));
         assertThat(withoutDate).isEqualTo(today);
         assertThat(withOtherDate).isEqualTo(today);
         delivery.close();
