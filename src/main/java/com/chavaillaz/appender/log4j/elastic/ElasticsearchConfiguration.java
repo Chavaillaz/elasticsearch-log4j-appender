@@ -12,7 +12,7 @@ import com.chavaillaz.appender.DeliveryOptions;
 import com.chavaillaz.appender.LogConfiguration;
 
 /**
- * Configuration for logs transmissions using Elasticsearch, immutable once built through {@link #builder()}.
+ * Configuration for logs transmissions using Elasticsearch, immutable once built through {@code builder()}.
  */
 @Value
 @Builder(toBuilder = true)
