@@ -88,8 +88,7 @@ The documents the appender gives up on reach an appender of Log4j2 nested in its
 `RollingFile` writing the message alone (`%m%n`) keeps them as newline-delimited JSON, rotated, compressed, with
 the permissions and the retention it is given (see the
 [common library](https://github.com/chavaillaz/common-log4j-appender#observability)). The appender starts and
-stops it itself, so that the documents its stop reports still reach it. Versions before 4.0 took a
-`DeadLetterFile` instead.
+stops it itself, so that the documents its stop reports still reach it.
 
 `Application`, `Host`, `Environment`, `Converter` and the properties from `FlushThreshold` on are those every
 appender built on the common library takes, the latter tuning the delivery of the documents, as the
