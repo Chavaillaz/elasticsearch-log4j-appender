@@ -68,9 +68,9 @@ In the Log4j configuration file, add a new appender `ElasticsearchAppender` usin
 | FlushInterval              | `5000`                      | The time (ms) between two automatic flushes, which are triggering the transmission of logs, even if not reaching the defined threshold.   |
 | FlushLevel                 | -                           | The minimum level (e.g. `WARN`) of an event flushing the documents right after it, rather than waiting for the threshold or the interval. |
 | MaxConcurrentTransmissions | `4`                         | The maximum number of bulk requests sent at the same time.                                                                                |
-| MaxPendingDocuments        | `10000`                     | The maximum number of documents waiting to be sent or retried, the oldest ones being discarded past it.                                   |
+| MaxPendingDocuments        | `10000`                     | The maximum number of documents waiting to be sent or retried, sent once reached, or the oldest discarded past it during a retry backoff. |
 | MaxRequestDocuments        | `2147483647`                | The maximum number of documents in a bulk request, a bigger batch being split into several requests.                                      |
-| MaxPendingBytes            | `9223372036854775807`       | The maximum estimated size (bytes) of the documents waiting to be sent or retried, the oldest ones being discarded past it.               |
+| MaxPendingBytes            | `9223372036854775807`       | The maximum estimated size (bytes) of the documents waiting to be sent or retried, bounding them as `MaxPendingDocuments` does.           |
 | MaxRequestBytes            | `10485760`                  | The maximum estimated size (bytes) of a bulk request, a heavier batch being split into several requests.                                  |
 | MaxConsecutiveFailures     | `5`                         | The maximum number of failed attempts in a row for the same documents before they are discarded.                                          |
 | MaxQueuedEvents            | `10000`                     | The maximum number of events waiting to be converted, the oldest one being discarded past it.                                             |
