@@ -40,7 +40,6 @@
         <!-- The date every entry of the archives carries, so that a commit builds the same bytes wherever it is
              built. The release script sets it along with the version, through versions:set -->
         <project.build.outputTimestamp>2026-10-02T00:00:00Z</project.build.outputTimestamp>
-        <lombok.version>1.18.48</lombok.version>
         <log4j.version>2.26.1</log4j.version>
         <!-- A warning of the compiler fails the build on the JDK the appender is released with, a later one only
              showing those of the checks it adds (see the profile "later-jdk") -->
@@ -91,14 +90,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Annotation processor -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Common appender library -->
         <dependency>
             <groupId>com.chavaillaz</groupId>
@@ -233,21 +224,12 @@
                     <showWarnings>true</showWarnings>
                     <annotationProcessorPaths>
                         <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                        <path>
                             <groupId>org.apache.logging.log4j</groupId>
                             <artifactId>log4j-core</artifactId>
                             <version>${log4j.version}</version>
                         </path>
                     </annotationProcessorPaths>
                     <annotationProcessors>
-                        <!-- Process Lombok annotations to generate corresponding sources -->
-                        <processor>
-                            lombok.launch.AnnotationProcessorHider$AnnotationProcessor
-                        </processor>
                         <!-- Process sources to generate `Log4j2Plugins.dat` -->
                         <processor>
                             org.apache.logging.log4j.core.config.plugins.processor.PluginProcessor

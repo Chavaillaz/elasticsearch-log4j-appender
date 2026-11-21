@@ -14,6 +14,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -25,10 +27,15 @@ import org.apache.logging.log4j.status.StatusListener;
 import org.apache.logging.log4j.status.StatusLogger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.chavaillaz.appender.DeliveryOptions;
 
 class ElasticsearchConfigurationTest {
+
+    private static final DateTimeFormatter DAILY = DateTimeFormatter.ofPattern("-yyyy.MM.dd");
 
     @Test
     void testGenerateIndexNameDate() {
@@ -238,6 +245,115 @@ class ElasticsearchConfigurationTest {
         // Then: the document given up on is a line of the file, which the appender closed as it stopped
         assertThat(Files.readAllLines(file, UTF_8)).singleElement()
                 .satisfies(line -> assertThat(line).contains("\"logmessage\":\"saved\""));
+    }
+
+    @Test
+    void testConfigurationsWithTheSameSettingsAreEqual() {
+        // When
+        ElasticsearchConfiguration first = configurationWithEverySetting();
+        ElasticsearchConfiguration second = configurationWithEverySetting();
+
+        // Then
+        assertThat(first).isEqualTo(second).hasSameHashCodeAs(second).isNotEqualTo("configuration");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("otherSettings")
+    void testConfigurationsDifferingInOneSettingAreNotEqual(
+            String setting, UnaryOperator<ElasticsearchConfiguration.ElasticsearchConfigurationBuilder> change) {
+        // Given
+        ElasticsearchConfiguration configuration = configurationWithEverySetting();
+
+        // When
+        ElasticsearchConfiguration other = change.apply(configuration.toBuilder()).build();
+
+        // Then
+        assertThat(other).isNotEqualTo(configuration);
+    }
+
+    static Stream<Arguments> otherSettings() {
+        return Stream.of(
+                otherSetting("application", builder -> builder.application("other")),
+                otherSetting("host", builder -> builder.host("other")),
+                otherSetting("environment", builder -> builder.environment("other")),
+                otherSetting("index", builder -> builder.index("other")),
+                otherSetting("indexSuffix", builder -> builder.indexSuffix(DateTimeFormatter.ofPattern("-yyyy"))),
+                otherSetting("url", builder -> builder.url("https://other:9200")),
+                otherSetting("urlTrusted", builder -> builder.urlTrusted(false)),
+                otherSetting("user", builder -> builder.user("other")),
+                otherSetting("password", builder -> builder.password("other")),
+                otherSetting("apiKey", builder -> builder.apiKey("other")),
+                otherSetting("deliveryOptions", builder -> builder.deliveryOptions(DeliveryOptions.defaults())));
+    }
+
+    @Test
+    void testToBuilderKeepsEverySetting() {
+        // Given
+        ElasticsearchConfiguration configuration = configurationWithEverySetting();
+
+        // When
+        ElasticsearchConfiguration copy = configuration.toBuilder().build();
+
+        // Then
+        assertThat(copy).isEqualTo(configuration);
+    }
+
+    @Test
+    void testToStringLeavesTheCredentialsOut() {
+        // When
+        String text = configurationWithEverySetting().toString();
+
+        // Then: the settings are listed, but for the values of the password and the API key
+        assertThat(text).contains("application=application", "url=https://localhost:9200", "user=elastic");
+        assertThat(text).doesNotContain("my-password", "my-api-key");
+    }
+
+    @Test
+    void testBuilderKeepsTheAttributesSet() {
+        // When
+        ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
+                .setIndex("logs")
+                .setIndexSuffix("-yyyy.MM.dd")
+                .setUrl("https://localhost:9200")
+                .setUrlTrusted(true)
+                .setUser("elastic")
+                .setPassword("my-password")
+                .setApiKey("my-api-key");
+
+        // Then
+        assertThat(builder.getIndex()).isEqualTo("logs");
+        assertThat(builder.getIndexSuffix()).isEqualTo("-yyyy.MM.dd");
+        assertThat(builder.getUrl()).isEqualTo("https://localhost:9200");
+        assertThat(builder.isUrlTrusted()).isTrue();
+        assertThat(builder.getUser()).isEqualTo("elastic");
+        assertThat(builder.getPassword()).isEqualTo("my-password");
+        assertThat(builder.getApiKey()).isEqualTo("my-api-key");
+    }
+
+    private static Arguments otherSetting(
+            String setting, UnaryOperator<ElasticsearchConfiguration.ElasticsearchConfigurationBuilder> change) {
+        return Arguments.of(setting, change);
+    }
+
+    /**
+     * Builds a configuration giving each setting a value of its own.
+     *
+     * @return The configuration
+     */
+    private static ElasticsearchConfiguration configurationWithEverySetting() {
+        return ElasticsearchConfiguration.builder()
+                .application("application")
+                .host("host")
+                .environment("environment")
+                .index("logs")
+                .indexSuffix(DAILY)
+                .url("https://localhost:9200")
+                .urlTrusted(true)
+                .user("elastic")
+                .password("my-password")
+                .apiKey("my-api-key")
+                .deliveryOptions(ElasticsearchConfiguration.DEFAULT_DELIVERY_OPTIONS)
+                .build();
     }
 
     /**

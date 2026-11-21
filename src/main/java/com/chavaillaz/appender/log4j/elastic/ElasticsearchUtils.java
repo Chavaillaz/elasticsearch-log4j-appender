@@ -3,6 +3,7 @@ package com.chavaillaz.appender.log4j.elastic;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.Base64;
 import javax.net.ssl.SSLContext;
 
@@ -11,8 +12,6 @@ import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
-import lombok.SneakyThrows;
-import lombok.experimental.UtilityClass;
 import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.TrustAllStrategy;
@@ -25,10 +24,11 @@ import org.jspecify.annotations.Nullable;
 /**
  * Elasticsearch specific utility methods.
  */
-// The private constructor of the class is declared by Lombok, after javac found none
-@SuppressWarnings("missing-explicit-ctor")
-@UtilityClass
-public class ElasticsearchUtils {
+public final class ElasticsearchUtils {
+
+    private ElasticsearchUtils() {
+        // Static methods only
+    }
 
     /**
      * Creates a new asynchronous Elasticsearch client, verifying the certificate Elasticsearch presents unless
@@ -105,12 +105,16 @@ public class ElasticsearchUtils {
      * Creates a permissive SSL context trusting everything.
      *
      * @return The SSL context
+     * @throws IllegalStateException If the JDK cannot create it
      */
-    @SneakyThrows
     public static SSLContext createPermissiveContext() {
-        return SSLContexts.custom()
-                .loadTrustMaterial(null, TrustAllStrategy.INSTANCE)
-                .build();
+        try {
+            return SSLContexts.custom()
+                    .loadTrustMaterial(null, TrustAllStrategy.INSTANCE)
+                    .build();
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("No SSL context trusting every certificate could be created", e);
+        }
     }
 
     /**

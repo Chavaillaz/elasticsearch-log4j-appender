@@ -115,14 +115,14 @@ class ElasticsearchAppenderTest {
         List<ElasticsearchLog> logs = searchLog(apiClient, appender.getLogConfiguration().getIndex(), id);
         assertThat(logs).hasSize(1);
         ElasticsearchLog log = logs.get(0);
-        assertThat(log.getHost()).isEqualTo(appender.getLogConfiguration().getHost());
-        assertThat(log.getEnvironment()).isEqualTo(appender.getLogConfiguration().getEnvironment());
-        assertThat(log.getApplication()).isEqualTo(appender.getLogConfiguration().getApplication());
-        assertThat(log.getLogger()).isEqualTo(logger);
-        assertThat(log.getLevel()).isEqualTo(INFO.toString());
-        assertThat(log.getLogmessage()).isEqualTo(id);
-        assertThat(log.getKey()).isEqualTo("value");
-        assertThat(log.getStacktrace()).isNotNull();
+        assertThat(log.host()).isEqualTo(appender.getLogConfiguration().getHost());
+        assertThat(log.environment()).isEqualTo(appender.getLogConfiguration().getEnvironment());
+        assertThat(log.application()).isEqualTo(appender.getLogConfiguration().getApplication());
+        assertThat(log.logger()).isEqualTo(logger);
+        assertThat(log.level()).isEqualTo(INFO.toString());
+        assertThat(log.logmessage()).isEqualTo(id);
+        assertThat(log.key()).isEqualTo("value");
+        assertThat(log.stacktrace()).isNotNull();
     }
 
     @Test

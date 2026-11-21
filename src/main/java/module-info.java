@@ -17,7 +17,6 @@ module com.chavaillaz.appender.log4j.elastic {
     requires org.apache.httpcomponents.client5.httpclient5;
     requires org.apache.httpcomponents.core5.httpcore5;
     requires tools.jackson.databind;
-    requires static lombok;
 
     // Declared on behalf of the clients, which as automatic modules declare none of what they need, so that the
     // modules they load classes from are resolved along with them on the module path

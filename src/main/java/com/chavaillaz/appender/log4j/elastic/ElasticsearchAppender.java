@@ -5,9 +5,6 @@ import static org.apache.logging.log4j.core.Core.CATEGORY_NAME;
 
 import java.time.format.DateTimeFormatter;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
@@ -43,9 +40,6 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
      * Holds the attributes of the element, those every appender built on the common library takes, inherited, and
      * those of Elasticsearch.
      */
-    @Getter
-    @Setter
-    @Accessors(chain = true)
     public static class Builder extends LogDeliveryAppenderBuilder<ElasticsearchAppender, Builder> {
 
         @PluginBuilderAttribute("Index")
@@ -79,6 +73,151 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
          */
         public Builder() {
             // Called by ElasticsearchAppender.builder(), the factory method Log4j2 builds the plugin with
+        }
+
+        /**
+         * The name of the index to which the documents are sent, {@code ha} unless set.
+         *
+         * @return The index name
+         */
+        public String getIndex() {
+            return index;
+        }
+
+        /**
+         * The pattern of the suffix added to the name of the index, which the date of each event is formatted
+         * with (see {@link DateTimeFormatter}).
+         *
+         * @return The pattern, or {@code null} for no suffix
+         */
+        public @Nullable String getIndexSuffix() {
+            return indexSuffix;
+        }
+
+        /**
+         * The address of Elasticsearch, in the format {@code scheme://host:port}, which the appender requires.
+         *
+         * @return The address
+         */
+        public String getUrl() {
+            return url;
+        }
+
+        /**
+         * Whether to trust any certificate Elasticsearch presents over HTTPS, without verifying its host name
+         * either, {@code false} unless set.
+         *
+         * @return {@code true} to trust any certificate
+         */
+        public boolean isUrlTrusted() {
+            return urlTrusted;
+        }
+
+        /**
+         * The username to use as credentials, along with the password.
+         *
+         * @return The username, or {@code null} for none
+         */
+        public @Nullable String getUser() {
+            return user;
+        }
+
+        /**
+         * The password of the user.
+         *
+         * @return The password, or {@code null} for none
+         */
+        public @Nullable String getPassword() {
+            return password;
+        }
+
+        /**
+         * The API key, already encoded, used rather than the user and password when set.
+         *
+         * @return The API key, or {@code null} for none
+         */
+        public @Nullable String getApiKey() {
+            return apiKey;
+        }
+
+        /**
+         * Sets the name of the index to which the documents are sent.
+         *
+         * @param index The index name
+         * @return This builder
+         */
+        public Builder setIndex(String index) {
+            this.index = index;
+            return this;
+        }
+
+        /**
+         * Sets the pattern of the suffix added to the name of the index, which the date of each event is
+         * formatted with.
+         *
+         * @param indexSuffix The pattern, following {@link DateTimeFormatter}, or {@code null} or an empty one
+         *                    for no suffix
+         * @return This builder
+         */
+        public Builder setIndexSuffix(@Nullable String indexSuffix) {
+            this.indexSuffix = indexSuffix;
+            return this;
+        }
+
+        /**
+         * Sets the address of Elasticsearch.
+         *
+         * @param url The address, in the format {@code scheme://host:port}
+         * @return This builder
+         */
+        public Builder setUrl(String url) {
+            this.url = url;
+            return this;
+        }
+
+        /**
+         * Sets whether to trust any certificate Elasticsearch presents over HTTPS, without verifying its host
+         * name either.
+         *
+         * @param urlTrusted {@code true} to trust any certificate
+         * @return This builder
+         */
+        public Builder setUrlTrusted(boolean urlTrusted) {
+            this.urlTrusted = urlTrusted;
+            return this;
+        }
+
+        /**
+         * Sets the username to use as credentials, along with the password.
+         *
+         * @param user The username, or {@code null} for none
+         * @return This builder
+         */
+        public Builder setUser(@Nullable String user) {
+            this.user = user;
+            return this;
+        }
+
+        /**
+         * Sets the password of the user.
+         *
+         * @param password The password, or {@code null} for none
+         * @return This builder
+         */
+        public Builder setPassword(@Nullable String password) {
+            this.password = password;
+            return this;
+        }
+
+        /**
+         * Sets the API key, already encoded, used rather than the user and password when set.
+         *
+         * @param apiKey The API key, or {@code null} for none
+         * @return This builder
+         */
+        public Builder setApiKey(@Nullable String apiKey) {
+            this.apiKey = apiKey;
+            return this;
         }
 
         /**
