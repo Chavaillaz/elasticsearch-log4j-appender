@@ -1,7 +1,8 @@
 # Elasticsearch Appender
 
-[v1]: https://github.com/Chavaillaz/elasticsearch-log4j-appender/wiki/Appender-1.x-‐-Log4j-1.x
-[v2]: https://github.com/Chavaillaz/elasticsearch-log4j-appender/wiki/Appender-2.x-‐-Log4j-2.x
+[v1]: https://github.com/chavaillaz/elasticsearch-log4j-appender/blob/1.0.0/README.md
+[v2]: https://github.com/chavaillaz/elasticsearch-log4j-appender/blob/2.1.3/README.md
+[v3]: https://github.com/chavaillaz/elasticsearch-log4j-appender/blob/3.1.2/README.md
 
 ![Quality Gate](https://github.com/chavaillaz/elasticsearch-log4j-appender/actions/workflows/code-quality.yml/badge.svg)
 ![Dependency Check](https://github.com/chavaillaz/elasticsearch-log4j-appender/actions/workflows/dependency-check.yml/badge.svg)
@@ -19,12 +20,12 @@ logs is asynchronous (i.e. not on the main thread) and therefore will not block 
 | 2.1.1            | 2.19.0        | 8.x             | 17+          | [Version 2][v2] |
 | 2.1.2            | 2.20.0        | 8.x             | 17+          | [Version 2][v2] |
 | 2.1.3            | 2.24.1        | 8.x             | 17+          | [Version 2][v2] |
-| 3.0.0            | 2.24.1        | 8.x             | 17+          | See below       |
-| 3.0.1            | 2.24.3        | 8.x             | 17+          | See below       |
-| 3.0.2            | 2.25.1        | 8.x             | 17+          | See below       |
-| 3.1.0            | 2.25.1        | 9.x             | 17+          | See below       |
-| 3.1.1            | 2.25.3        | 9.x             | 17+          | See below       |
-| 3.1.2            | 2.25.4        | 9.x             | 17+          | See below       |
+| 3.0.0            | 2.24.1        | 8.x             | 17+          | [Version 3][v3] |
+| 3.0.1            | 2.24.3        | 8.x             | 17+          | [Version 3][v3] |
+| 3.0.2            | 2.25.1        | 8.x             | 17+          | [Version 3][v3] |
+| 3.1.0            | 2.25.1        | 9.x             | 17+          | [Version 3][v3] |
+| 3.1.1            | 2.25.3        | 9.x             | 17+          | [Version 3][v3] |
+| 3.1.2            | 2.25.4        | 9.x             | 17+          | [Version 3][v3] |
 | 4.0.0            | 2.26.1        | 9.x             | 21+          | See below       |
 
 ## Installation
