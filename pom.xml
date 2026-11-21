@@ -6,7 +6,7 @@
 
     <groupId>com.chavaillaz</groupId>
     <artifactId>elasticsearch-log4j-appender</artifactId>
-    <version>4.0-SNAPSHOT</version>
+    <version>4.0.0</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}.${project.artifactId}</name>
@@ -39,7 +39,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- The date every entry of the archives carries, so that a commit builds the same bytes wherever it is
              built. The release script sets it along with the version, through versions:set -->
-        <project.build.outputTimestamp>2026-10-02T00:00:00Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-11-21T01:53:48Z</project.build.outputTimestamp>
         <lombok.version>1.18.48</lombok.version>
         <log4j.version>2.26.1</log4j.version>
 
