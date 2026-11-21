@@ -145,16 +145,39 @@ appender. The `status` attribute of the `Configuration` element shows them from 
 
 ## Contributing
 
-If you have a feature request or found a bug, you can:
+A feature request or a bug report is welcome as an issue, and a change as a pull request from a fork.
 
-- Write an issue
-- Create a pull request
+The build needs **JDK 21 or later** and Maven 3.9 or later, and says so on an older one. Its tests start
+Elasticsearch in a container through [Testcontainers](https://java.testcontainers.org), which needs Docker
+running. Everything the build checks runs with:
 
-If you want to contribute then
+```shell
+mvn verify
+```
 
-- Please write tests covering all your changes
-- Ensure you didn't break the build by running `mvn test`
-- Fork the repo and create a pull request
+A change is ready once that passes, which takes:
+
+- **Tests covering it.** They assert with [AssertJ](https://assertj.github.io/doc/).
+- **Imports in order**, which Checkstyle verifies (see [checkstyle.xml](checkstyle.xml)): the static ones,
+  then those of `java`, `javax` and `jakarta`, then those of third parties, then those of `com.chavaillaz`,
+  each group sorted alphabetically and separated from the next by a blank line, with no star import and none
+  left unused.
+- **No compiler warning.** Every check of the compiler is on (`-Xlint:all`), and a warning fails the build on
+  JDK 21. A later JDK only shows the warnings of the checks it adds.
+
+Every pull request, and every push to `master`, is built that way on Java 21 and on the latest long-term
+support version, with the coverage of the tests measured, and failing once they cover less than 80% of the lines
+or of the branches of the appender: `mvn clean -Pcoverage verify` writes the same report to `target/site/jacoco`,
+the `clean` keeping the data of an earlier build out of it.
+
+### Releasing
+
+A release is made by the maintainer, from a clean working tree: `sh release.sh` asks for the version, sets it
+in the POM, and pushes that commit as a tag of the same name, `master` keeping its snapshot version.
+Publishing a GitHub release for that tag then starts the [workflow](.github/workflows/maven-publish.yml)
+building, signing and publishing the artifacts to Maven Central.
+The table at the top of this page lists every version released, a new major version pointing the rows of the
+one before to the README of its last release.
 
 ## License
 
