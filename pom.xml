@@ -42,6 +42,9 @@
         <project.build.outputTimestamp>2026-10-02T00:00:00Z</project.build.outputTimestamp>
         <lombok.version>1.18.48</lombok.version>
         <log4j.version>2.26.1</log4j.version>
+        <!-- A warning of the compiler fails the build on the JDK the appender is released with, a later one only
+             showing those of the checks it adds (see the profile "later-jdk") -->
+        <maven.compiler.failOnWarning>true</maven.compiler.failOnWarning>
 
         <!-- Elasticsearch image versions need also to be updated in ElasticsearchAppenderTest -->
         <elasticsearch.version>9.5.6</elasticsearch.version>
@@ -227,6 +230,7 @@
                 <version>3.16.0</version>
                 <configuration>
                     <release>21</release>
+                    <showWarnings>true</showWarnings>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -253,11 +257,27 @@
                             org.apache.logging.log4j.core.config.plugins.processor.GraalVmProcessor
                         </processor>
                     </annotationProcessors>
-                    <compilerArgs>
-                        <arg>-Alog4j.graalvm.groupId=${project.groupId}</arg>
-                        <arg>-Alog4j.graalvm.artifactId=${project.artifactId}</arg>
-                    </compilerArgs>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>-Xlint:all,-processing,-classfile</arg>
+                                <arg>-Alog4j.graalvm.groupId=${project.groupId}</arg>
+                                <arg>-Alog4j.graalvm.artifactId=${project.artifactId}</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>-Xlint:all,-processing,-classfile,-missing-explicit-ctor</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -320,6 +340,15 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>later-jdk</id>
+            <activation>
+                <jdk>[22,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.failOnWarning>false</maven.compiler.failOnWarning>
+            </properties>
+        </profile>
         <profile>
             <id>release</id>
             <build>

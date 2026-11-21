@@ -25,6 +25,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * Elasticsearch specific utility methods.
  */
+// The private constructor of the class is declared by Lombok, after javac found none
+@SuppressWarnings("missing-explicit-ctor")
 @UtilityClass
 public class ElasticsearchUtils {
 

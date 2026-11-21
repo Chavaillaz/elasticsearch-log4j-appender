@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
@@ -120,27 +121,29 @@ class ElasticsearchLogDeliveryTest {
 
     @Test
     void testSendingDoesNotWaitForTheAnswer() throws Exception {
+        ElasticsearchLogDelivery delivery;
+        CompletableFuture<TransmissionResult<Map<String, Object>>> result;
+
         // Given: a server accepting connections and never answering
         try (ServerSocket server = new ServerSocket(0)) {
             ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
                     .url("http://localhost:" + server.getLocalPort())
                     .build();
-            ElasticsearchLogDelivery delivery = new ElasticsearchLogDelivery(configuration);
+            delivery = new ElasticsearchLogDelivery(configuration);
 
             // When
             long start = System.nanoTime();
-            var result = delivery.sendBulk(List.of(FIRST));
+            result = delivery.sendBulk(List.of(FIRST));
             Duration elapsed = Duration.ofNanos(System.nanoTime() - start);
 
             // Then: the request is sent without any thread waiting for its answer
             assertThat(elapsed).isLessThan(Duration.ofSeconds(5));
             assertThat(result).isNotDone();
-
-            // Cleanup: the server gone first, the request failing rather than being left for the close to wait on
-            server.close();
-            assertThat(result).failsWithin(Duration.ofSeconds(10));
-            delivery.close(Duration.ZERO);
         }
+
+        // Cleanup: the server gone first, the request failing rather than being left for the close to wait on
+        assertThat(result).failsWithin(Duration.ofSeconds(10));
+        delivery.close(Duration.ZERO);
     }
 
     @Test

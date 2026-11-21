@@ -14,6 +14,8 @@ import com.chavaillaz.appender.LogConfiguration;
 /**
  * Configuration for logs transmissions using Elasticsearch, immutable once built through {@code builder()}.
  */
+// The constructors of the class and of its builder are declared by Lombok, after javac found none
+@SuppressWarnings("missing-explicit-ctor")
 @Value
 @Builder(toBuilder = true)
 public class ElasticsearchConfiguration implements LogConfiguration {

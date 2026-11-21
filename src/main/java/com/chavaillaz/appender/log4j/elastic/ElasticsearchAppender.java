@@ -75,6 +75,13 @@ public class ElasticsearchAppender extends AbstractLogDeliveryAppender<Elasticse
         private @Nullable String apiKey;
 
         /**
+         * Creates a builder, every attribute at its default.
+         */
+        public Builder() {
+            // Called by ElasticsearchAppender.builder(), the factory method Log4j2 builds the plugin with
+        }
+
+        /**
          * The delivery options an attribute left unset keeps the value of.
          *
          * @return The defaults of the appender, batching documents

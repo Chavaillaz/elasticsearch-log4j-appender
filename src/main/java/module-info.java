@@ -4,10 +4,11 @@
  * <p>
  * The Elasticsearch client and its REST client declare no module name: they are required by the names the JDK
  * derives from their jars, {@code elasticsearch.java} and {@code elasticsearch.rest5.client}, which the jars keep
- * as long as they are not renamed. The warning of javac against a transitive dependency on them is
- * suppressed, the API of the appender exposing the client as it is.
+ * as long as they are not renamed. The warnings of javac against requiring such an automatic module, as the
+ * jars of HttpClient 5 are too, and against requiring one transitively, are suppressed: these libraries offer
+ * no other module to require, and the API of the appender exposes the client as it is.
  */
-@SuppressWarnings("requires-transitive-automatic")
+@SuppressWarnings({"requires-automatic", "requires-transitive-automatic"})
 module com.chavaillaz.appender.log4j.elastic {
 
     requires transitive com.chavaillaz.appender;
