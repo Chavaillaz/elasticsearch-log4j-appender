@@ -44,7 +44,7 @@
         <log4j.version>2.26.1</log4j.version>
 
         <!-- Elasticsearch image versions need also to be updated in ElasticsearchAppenderTest -->
-        <elasticsearch.version>9.5.4</elasticsearch.version>
+        <elasticsearch.version>9.5.6</elasticsearch.version>
     </properties>
 
     <dependencyManagement>
@@ -59,14 +59,14 @@
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>2.22.3</version>
+                <version>2.23.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>3.2.3</version>
+                <version>3.3.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -100,7 +100,7 @@
         <dependency>
             <groupId>com.chavaillaz</groupId>
             <artifactId>common-log4j-appender</artifactId>
-            <version>2.0-SNAPSHOT</version>
+            <version>2.0.0</version>
         </dependency>
 
         <!-- Elasticsearch client -->
@@ -234,14 +234,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.1</version>
             </plugin>
 
             <plugin>
-                <!-- Enforces the import order convention defined in checkstyle.xml (static, then JDK,
-                     then third-party, then com.chavaillaz packages, each group sorted alphabetically and
-                     separated by a blank line). Bound to "validate" so a style violation fails the build
-                     before compilation is even attempted. -->
+                <!-- Enforces the import order convention defined in checkstyle.xml.
+                     Bound to "validate" so a style violation fails the build before compilation is even attempted. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.6.0</version>
@@ -249,7 +247,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>14.3.0</version>
+                        <version>14.4.0</version>
                     </dependency>
                 </dependencies>
                 <configuration>
@@ -276,12 +274,9 @@
             </plugin>
 
             <plugin>
-                <!-- Invoke manually with e.g. "mvn versions:display-dependency-updates": binding it to a
-                     default lifecycle phase would require network access (and slow down) every single
-                     build, including offline or CI ones that only need to compile or run tests. -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.22.0</version>
+                <version>2.25.2</version>
                 <configuration>
                     <rulesUri>file:///${project.basedir}/versions.xml</rulesUri>
                 </configuration>
@@ -296,7 +291,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.3</version>
+                <version>3.7.0</version>
                 <executions>
                     <execution>
                         <id>enforce-build</id>
@@ -305,8 +300,12 @@
                         </goals>
                         <configuration>
                             <rules>
+                                <requireJavaVersion>
+                                    <version>[21,)</version>
+                                    <message>The build needs JDK 21 or later and runs on ${java.version}</message>
+                                </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>3.8</version>
+                                    <version>3.9</version>
                                 </requireMavenVersion>
                                 <!-- Fails a plugin added without a version, rather than leaving it to Maven -->
                                 <requirePluginVersions/>
@@ -373,7 +372,7 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.11.0</version>
+                        <version>0.12.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
@@ -391,7 +390,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.15</version>
+                        <version>0.8.16</version>
                         <executions>
                             <execution>
                                 <id>prepare-agent</id>

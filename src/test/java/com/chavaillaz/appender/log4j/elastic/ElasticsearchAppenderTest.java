@@ -34,7 +34,7 @@ class ElasticsearchAppenderTest {
     public static final String ELASTICSEARCH_PASSWORD = "changeme";
     public static final DockerImageName ELASTICSEARCH_IMAGE = DockerImageName
             .parse("docker.elastic.co/elasticsearch/elasticsearch")
-            .withTag("9.5.4");
+            .withTag("9.5.5");
 
     // A single cluster for every test, starting one taking most of their time
     private static final ElasticsearchContainer CONTAINER = new ElasticsearchContainer(ELASTICSEARCH_IMAGE);
