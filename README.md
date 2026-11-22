@@ -157,7 +157,8 @@ mvn verify
 
 A change is ready once that passes, which takes:
 
-- **Tests covering it.** They assert with [AssertJ](https://assertj.github.io/doc/).
+- **Tests covering it.** They assert with [AssertJ](https://assertj.github.io/doc/). A test still running after a
+  minute fails, rather than leaving the build hung on it, the start of the cluster being given ten minutes.
 - **Imports in order**, which Checkstyle verifies (see [checkstyle.xml](checkstyle.xml)): the static ones,
   then those of `java`, `javax` and `jakarta`, then those of third parties, then those of `com.chavaillaz`,
   each group sorted alphabetically and separated from the next by a blank line, with no star import and none
