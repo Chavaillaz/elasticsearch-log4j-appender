@@ -15,11 +15,13 @@ import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.bulk.OperationType;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.chavaillaz.appender.DocumentSizeEstimator;
 import com.chavaillaz.appender.TransmissionResult;
 
+@DisplayName("ElasticsearchLogDelivery")
 class ElasticsearchLogDeliveryTest {
 
     private static final Map<String, Object> FIRST = Map.of("logmessage", "first");
@@ -51,6 +53,7 @@ class ElasticsearchLogDeliveryTest {
     }
 
     @Test
+    @DisplayName("Reports a success when the cluster reports no error")
     void testSuccessWithoutErrors() {
         // When
         var result = toResult(List.of(FIRST, SECOND), response(false, indexed(), indexed()));
@@ -60,6 +63,7 @@ class ElasticsearchLogDeliveryTest {
     }
 
     @Test
+    @DisplayName("Hands back only the documents rejected, as sent, with the reason given")
     void testPartialFailureRetriesOnlyTheRejectedDocuments() {
         // When
         var result = toResult(List.of(FIRST, SECOND, THIRD), response(true, indexed(), rejected(), indexed()));
@@ -74,6 +78,7 @@ class ElasticsearchLogDeliveryTest {
     }
 
     @Test
+    @DisplayName("Reports a failure when every document is rejected")
     void testFailureWhenEveryDocumentIsRejected() {
         // When
         var result = toResult(List.of(FIRST, SECOND), response(true, rejected(), rejected()));
@@ -85,6 +90,7 @@ class ElasticsearchLogDeliveryTest {
     }
 
     @Test
+    @DisplayName("Retries every document when the items answered do not match those sent")
     void testFailureWhenTheItemsDoNotMatchTheDocuments() {
         // When: fewer items than documents, which leaves no telling which one was indexed
         var result = toResult(List.of(FIRST, SECOND), response(true, rejected()));
@@ -94,6 +100,7 @@ class ElasticsearchLogDeliveryTest {
     }
 
     @Test
+    @DisplayName("Counts the line of the action along with the document in its size")
     void testSizeCountsTheActionOfTheDocument() throws Exception {
         // Given
         ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
@@ -111,6 +118,7 @@ class ElasticsearchLogDeliveryTest {
     }
 
     @Test
+    @DisplayName("Reports a failure when the cluster reports errors that no item names")
     void testFailureWhenNoItemNamesTheError() {
         // When
         var result = toResult(List.of(FIRST, SECOND), response(true, indexed(), indexed()));
@@ -120,6 +128,7 @@ class ElasticsearchLogDeliveryTest {
     }
 
     @Test
+    @DisplayName("Sends a request without a thread waiting for its answer")
     void testSendingDoesNotWaitForTheAnswer() throws Exception {
         ElasticsearchLogDelivery delivery;
         CompletableFuture<TransmissionResult<Map<String, Object>>> result;
@@ -147,6 +156,7 @@ class ElasticsearchLogDeliveryTest {
     }
 
     @Test
+    @DisplayName("Names the index after the date of the event, whenever it is sent")
     void testIndexIsNamedAfterTheDateOfTheEvent() throws Exception {
         // Given: a daily index, and an event of a day long gone
         ElasticsearchLogDelivery delivery = new ElasticsearchLogDelivery(dailyIndexConfiguration());
@@ -160,6 +170,7 @@ class ElasticsearchLogDeliveryTest {
     }
 
     @Test
+    @DisplayName("Names the index after the day a document is sent when its date cannot be read")
     void testIndexOfADocumentWithoutItsDateIsTheOneOfTheDayItIsSent() throws Exception {
         // Given
         ElasticsearchLogDelivery delivery = new ElasticsearchLogDelivery(dailyIndexConfiguration());

@@ -25,6 +25,7 @@ import org.apache.logging.log4j.core.util.NetUtils;
 import org.apache.logging.log4j.status.StatusData;
 import org.apache.logging.log4j.status.StatusListener;
 import org.apache.logging.log4j.status.StatusLogger;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,11 +34,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import com.chavaillaz.appender.DeliveryOptions;
 
+@DisplayName("ElasticsearchConfiguration")
 class ElasticsearchConfigurationTest {
 
     private static final DateTimeFormatter DAILY = DateTimeFormatter.ofPattern("-yyyy.MM.dd");
 
     @Test
+    @DisplayName("Names the index after the date, in the format of its suffix")
     void testGenerateIndexNameDate() {
         // Given
         String index = "idx";
@@ -57,6 +60,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Names the index as it is configured when it has no suffix")
     void testGenerateIndexNameWithoutSuffix() {
         // Given
         ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
@@ -71,6 +75,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Applies the delivery options set as attributes, the others keeping their defaults")
     void testDeliveryOptionsFromAttributes() {
         // Given
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
@@ -93,6 +98,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Defaults to the same options either way, splitting a bulk request past 10 MiB")
     void testDefaultsSplitRequestsPastTenMebibytes() {
         // When: neither attributes nor options given
         DeliveryOptions fromAttributes = ElasticsearchAppender.builder()
@@ -112,6 +118,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Keeps the host name it is given")
     void testHostNameSetIsKept() {
         // Given
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
@@ -126,6 +133,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Defaults the host to the name of the machine")
     void testHostDefaultsToTheMachine() {
         // Given: a builder created in code, which no configuration of Log4j2 fills
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
@@ -136,6 +144,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Fails the configuration on a flush level it does not know")
     void testUnknownFlushLevelFailsTheConfiguration() {
         // Given
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()
@@ -147,6 +156,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Lists its attributes to the status logger without the password or the API key")
     void testCredentialsAreHiddenFromTheStatusLogger() throws Exception {
         // Given: every message of the status logger, down to the debug one listing the attributes of the appender
         List<String> messages = new CopyOnWriteArrayList<>();
@@ -186,6 +196,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Creates no appender without a URL")
     void testMissingUrlFailsTheConfiguration() throws Exception {
         // When
         LoggerContext context = startContext("""
@@ -201,6 +212,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Takes a URL given through a lookup")
     void testUrlGivenThroughALookup() throws Exception {
         // Given: the URL given by a system property, as an environment variable through ${env:ELASTIC_URL}
         System.setProperty("ELASTIC_URL", "http://localhost:1");
@@ -226,6 +238,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Hands the documents it gives up on to the dead-letter appender nested in it")
     void testDroppedDocumentsReachTheNestedDeadLetterAppender(@TempDir Path directory) throws Exception {
         // Given: a cluster that cannot be reached, a single attempt per document, and a file appender nested in
         // the element for the documents dropped
@@ -248,6 +261,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Equals a configuration built with the same settings, with the same hash code")
     void testConfigurationsWithTheSameSettingsAreEqual() {
         // When
         ElasticsearchConfiguration first = configurationWithEverySetting();
@@ -259,6 +273,7 @@ class ElasticsearchConfigurationTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("otherSettings")
+    @DisplayName("Differs from a configuration a single setting tells apart")
     void testConfigurationsDifferingInOneSettingAreNotEqual(
             String setting, UnaryOperator<ElasticsearchConfiguration.ElasticsearchConfigurationBuilder> change) {
         // Given
@@ -287,6 +302,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Copies every setting into the builder it gives back")
     void testToBuilderKeepsEverySetting() {
         // Given
         ElasticsearchConfiguration configuration = configurationWithEverySetting();
@@ -299,6 +315,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Lists its settings when printed, without the password or the API key")
     void testToStringLeavesTheCredentialsOut() {
         // When
         String text = configurationWithEverySetting().toString();
@@ -309,6 +326,7 @@ class ElasticsearchConfigurationTest {
     }
 
     @Test
+    @DisplayName("Gives back the attributes set on its builder")
     void testBuilderKeepsTheAttributesSet() {
         // When
         ElasticsearchAppender.Builder builder = ElasticsearchAppender.builder()

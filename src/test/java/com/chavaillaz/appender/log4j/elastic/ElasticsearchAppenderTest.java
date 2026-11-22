@@ -23,10 +23,12 @@ import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.SimpleMessage;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
+@DisplayName("ElasticsearchAppender")
 class ElasticsearchAppenderTest {
 
     // Default user and password for the docker image from Elastic
@@ -88,6 +90,7 @@ class ElasticsearchAppenderTest {
     }
 
     @Test
+    @DisplayName("Ships an event to the cluster with its fields, its MDC entries and its stack trace")
     void systemTestWithElasticsearch() throws Exception {
         // Given
         String id = UUID.randomUUID().toString();
@@ -126,6 +129,7 @@ class ElasticsearchAppenderTest {
     }
 
     @Test
+    @DisplayName("Refuses a certificate the JVM does not trust, unless told to trust any")
     void testCertificateIsVerifiedUnlessTrusted() throws Exception {
         // Given: the self-signed certificate of the container, which the JVM does not trust
         ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()

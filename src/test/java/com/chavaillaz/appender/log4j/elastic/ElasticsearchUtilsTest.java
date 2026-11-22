@@ -4,11 +4,14 @@ import static com.chavaillaz.appender.log4j.elastic.ElasticsearchUtils.createCli
 import static org.assertj.core.api.Assertions.assertThat;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@DisplayName("ElasticsearchUtils")
 class ElasticsearchUtilsTest {
 
     @Test
+    @DisplayName("Creates a client with neither a user nor an API key")
     void testCreateClientWithoutCredentials() throws Exception {
         // Given: a cluster without security, reached with neither a user nor an API key
         ElasticsearchConfiguration configuration = ElasticsearchConfiguration.builder()
