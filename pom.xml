@@ -141,6 +141,19 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>${project.basedir}</directory>
+                <includes>
+                    <include>LICENSE</include>
+                </includes>
+                <targetPath>META-INF</targetPath>
+            </resource>
+        </resources>
+
         <pluginManagement>
             <!-- The plugins of the lifecycles the build only binds by default, which Maven would otherwise resolve to
                  the versions it ships with, older ones changing with the version of Maven building it -->
