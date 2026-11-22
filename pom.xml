@@ -143,7 +143,7 @@
     <build>
         <pluginManagement>
             <!-- The plugins of the lifecycles the build only binds by default, which Maven would otherwise resolve to
-                 the versions it ships with: those of Maven 3.8 date from 2012 -->
+                 the versions it ships with, older ones changing with the version of Maven building it -->
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
